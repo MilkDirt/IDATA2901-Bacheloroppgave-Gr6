@@ -1,8 +1,8 @@
 fastapi
-uvicorn
+uvicorn[standard]
 python-dotenv
-
-openai
+pydantic
 pypdf
-
-chromadb
+faiss-cpu
+numpy
+openai
