@@ -15,6 +15,17 @@ from src.rag.answer import get_answerer
 # Initialize FastAPI application
 app = FastAPI(title="Bachelor RAG API")
 
+#Testing to connect front to backend
+from fastapi.middleware.cors import CORSMiddleware
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173"],  # Vite default port
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 # Create a single shared RAG answerer instance
 answerer = get_answerer()
 
