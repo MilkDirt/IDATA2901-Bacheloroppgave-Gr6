@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import "./styles/global.css";
+import "./styles/chat.css";
 
 function App() {
   const [input, setInput] = useState("");
@@ -58,8 +59,8 @@ function App() {
         <h3>Projects</h3>
       </div>
 
-      <div className="main">
-
+        <div className={`main ${messages.length === 0 ? "main--empty" : "main--active"}`}>
+            <div className="chat-col">
         <div className="chat-container">
           {messages.map((msg, i) => (
             <div
@@ -94,24 +95,34 @@ function App() {
           <div ref={messagesEndRef} />
         </div>
 
-        <div className="input-container">
-          <input
-            className="chat-input"
-            placeholder="Ask something..."
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                sendMessage();
-              }
-            }}
-          />
-          <button onClick={sendMessage} disabled={loading}>
-            Send
-          </button>
-        </div>
+            <form
+                className="input-container"
+                onSubmit={(e) => {
+                    e.preventDefault();
+                    sendMessage();
+                }}
+            >
+  <textarea
+      className="chat-input"
+      placeholder="Ask something..."
+      value={input}
+      onChange={(e) => setInput(e.target.value)}
+      onKeyDown={(e) => {
+          // ChatGPT behavior: Enter sends, Shift+Enter makes new line
+          if (e.key === "Enter" && !e.shiftKey) {
+              e.preventDefault();
+              sendMessage();
+          }
+      }}
+  />
+                <button type="submit" disabled={loading}>
+                    Send
+                </button>
+            </form>
 
-      </div>
+
+        </div>
+    </div>
     </div>
   );
 }

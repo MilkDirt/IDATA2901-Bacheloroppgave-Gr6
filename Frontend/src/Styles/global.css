@@ -36,6 +36,9 @@ html, body, #root {
     display: flex;
     justify-content: center;
     align-items: center;
+    justify-content: center;
+    height: 100%;
+    padding: 24px;
 }
 
 .chat-input {
