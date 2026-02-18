@@ -46,10 +46,10 @@
     margin-top: auto;
 }
 
-/* Your pill input (keep your existing but add flex) */
+
 .chat-input {
     flex: 1;
-    width: auto; /* important so it can shrink */
+    width: auto;
     padding: 18px 24px;
     border-radius: 999px;
     border: none;
@@ -70,14 +70,14 @@
     line-height: 1.35;
 }
 
-/* Assistant bubble (right side like in your mock) */
+/* Assistant bubble */
 .message.assistant .message-content {
     background: rgba(255,255,255,0.08);
     border: 1px solid rgba(255,255,255,0.10);
     color: rgba(255,255,255,0.9);
 }
 
-/* User message (make it simpler, slightly different) */
+/* User message */
 .message.user .message-content {
     background: rgba(255,255,255,0.14);
     border: 1px solid rgba(255,255,255,0.12);
