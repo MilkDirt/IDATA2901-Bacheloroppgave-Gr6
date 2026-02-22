@@ -7,7 +7,7 @@ export function useChat() {
 
     const messagesEndRef = useRef(null);
 
-    // Auto-scroll til bunnen (also when loading toggles)
+    // Auto-scroll til bunnen
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }, [messages, loading]);
