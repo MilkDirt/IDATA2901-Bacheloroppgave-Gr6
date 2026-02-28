@@ -5,7 +5,7 @@
 }
 
 :root {
-    --bg-dark: #0f172a;
+    --bg-dark: #272E35;
     --bg-panel: #272E35;
     --bg-sidebar: #1B2025;
     --text-main: #f1f5f9;
@@ -33,6 +33,7 @@ html, body, #root {
 .main {
     flex: 1;
     background: var(--bg-panel);
+    overflow-y: auto;
     display: flex;
     align-items: center;
     height: 100%;
