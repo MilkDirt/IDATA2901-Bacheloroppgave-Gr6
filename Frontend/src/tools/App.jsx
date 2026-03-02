@@ -9,8 +9,8 @@ import { useChat } from "../hooks/useChat.js";
 
 function App() {
 
-     const [projects, setProjects] = useState(["BachelorSkrivingen", "Fysikkeksamen", "Matteeksamen"]);
-     const [activeProject, setActiveProject] = useState("BachelorSkrivingen");
+     const [projects, setProjects] = useState(["Project 1", "Project 2", "Project 3"]);
+     const [activeProject, setActiveProject] = useState("Project 1");
      const chat = useChat(activeProject);
 
     return (
