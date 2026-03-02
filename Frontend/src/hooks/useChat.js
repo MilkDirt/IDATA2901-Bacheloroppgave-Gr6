@@ -1,16 +1,25 @@
 import { useEffect, useRef, useState } from "react";
 
-export function useChat() {
+export function useChat(activeProject) {
     const [input, setInput] = useState("");
-    const [messages, setMessages] = useState([]);
-    const [loading, setLoading] = useState(false);
 
+    const [chatHistories, setChatHistories] = useState({});
+    const [loading, setLoading] = useState(false);
     const messagesEndRef = useRef(null);
+    const messages = chatHistories[activeProject] || [];
 
     // Auto-scroll til bunnen (also when loading toggles)
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }, [messages, loading]);
+
+
+    const addMessageToProject = (newMessage) => {
+    setChatHistories((prev) => ({
+        ...prev,
+        [activeProject]: [...(prev[activeProject] || []), newMessage],
+    }));
+};
 
     const sendMessage = async () => {
         const text = input.trim();
@@ -18,7 +27,9 @@ export function useChat() {
 
         const userMessage = { role: "user", content: text };
 
-        setMessages((prev) => [...prev, userMessage]);
+        addMessageToProject(userMessage);
+
+
         setInput("");
         setLoading(true);
 
@@ -26,7 +37,10 @@ export function useChat() {
             const response = await fetch("http://127.0.0.1:8000/ask", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ question: text }),
+                body: JSON.stringify({
+                question: text,
+                project: activeProject
+                }),
             });
 
             const data = await response.json();
@@ -36,15 +50,15 @@ export function useChat() {
                 content: data.answer,
                 sources: data.sources || [],
             };
+            addMessageToProject(aiMessage);
 
-            setMessages((prev) => [...prev, aiMessage]);
+
         } catch (error) {
             console.error("Feil:", error);
-            // keep functionality
-            setMessages((prev) => [
-                ...prev,
-                { role: "assistant", content: "Noe gikk galt. Prøv igjen." },
-            ]);
+            addMessageToProject({
+                role: "assistant",
+                content: "Beklager, det skjedde en feil. Prøv igjen senere.",
+            });
         } finally {
             setLoading(false);
         }
