@@ -25,7 +25,6 @@ function App() {
     hoyde: "",
     nabovarsel: false
   });
-  console.log("showForm:", showForm);
 
   const messagesEndRef = useRef(null);
 

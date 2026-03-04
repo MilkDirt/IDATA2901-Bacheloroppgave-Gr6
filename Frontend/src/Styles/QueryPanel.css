@@ -4,7 +4,7 @@
   right: -420px;
   width: 400px;
   height: 100%;
-  background: white;
+  background: #1B2025;
   box-shadow: -4px 0 12px rgba(0,0,0,0.1);
   transition: right 0.3s ease;
   z-index: 1000;

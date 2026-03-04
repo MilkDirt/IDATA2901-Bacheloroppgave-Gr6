@@ -1,10 +1,9 @@
 
 import React, { useRef, useEffect } from "react";
 import sendIcon from "../assets/button.png";
+import "../Styles/chat.css";
 
 export default function ChatPanel({ input, setInput, messages, loading, sendMessage, messagesEndRef, setShowForm }) {
-    console.log("setShowForm value:", setShowForm);
-    console.log("Prop setShowForm:", setShowForm);
     const textareaRef = useRef(null);
 
     const resizeTextarea = () => {
