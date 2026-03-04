@@ -65,3 +65,10 @@ def ask(req: AskRequest):
            dict: Answer, sources, and metadata.
        """
     return answerer.answer(req.question)
+
+@app.post("/generate-application")
+async def generate_application(data: dict):
+    # bruk data direkte i prompt
+    return {
+        "application_text": "Generert byggesøknad her..."
+    }

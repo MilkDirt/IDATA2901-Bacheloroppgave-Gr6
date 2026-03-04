@@ -2,7 +2,9 @@
 import React, { useRef, useEffect } from "react";
 import sendIcon from "../assets/button.png";
 
-export default function ChatPanel({ input, setInput, messages, loading, sendMessage, messagesEndRef }) {
+export default function ChatPanel({ input, setInput, messages, loading, sendMessage, messagesEndRef, setShowForm }) {
+    console.log("setShowForm value:", setShowForm);
+    console.log("Prop setShowForm:", setShowForm);
     const textareaRef = useRef(null);
 
     const resizeTextarea = () => {
@@ -57,6 +59,7 @@ export default function ChatPanel({ input, setInput, messages, loading, sendMess
 
                     <div ref={messagesEndRef} />
                 </div>
+                <button type="button" className="form-btn" onClick={() => setShowForm(true)}>+ Søknad</button>
 
                 <form className="input-container" onSubmit={(e) => { e.preventDefault(); handleSend(); }}>
                     <div className="input-wrapper">
