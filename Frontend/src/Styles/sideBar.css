@@ -67,40 +67,42 @@
 .project-item:hover {
     background-color: #2A2A2A;
 }
-/* 1. Dette gjør at navnet ligger til venstre, og menyen dyttes helt til høyre */
+
 .project-item {
     display: flex;
     justify-content: space-between;
     align-items: center;
     padding: 10px;
-    cursor: pointer; /* Gjør at musa blir en peke-hånd */
+    cursor: pointer;
+
 }
 
-/* 2. Gjør selve prikk-knappen usynlig som standard */
+
 .three-dots-btn {
-    color: #888; /* Lys grå farge for prikkene */
-    opacity: 0; /* 0 betyr helt gjennomsiktig/usynlig */
+    color: #888;
+    opacity: 0;
     background: none;
     border: none;
     font-size: 18px;
     cursor: pointer;
-    transition: opacity 0.2s; /* Lager en myk overgang når den dukker opp */
+    transition: opacity 0.2s;
 }
 
-/* 3. MAGIEN: Når musen "hovrer" over hele prosjekt-boksen, gjør prikkene synlige (opacity 1) */
+
 .project-item:hover .three-dots-btn {
     opacity: 1;
+    background-color: #333333
 }
 
-/* 4. Pass på at den lille slett-boksen popper opp på riktig sted (under prikkene) */
+
 .menu-container {
     position: relative;
 }
 
 .dropdown-menu {
     position: absolute;
-    right: 0; /* Låser menyen til høyre side */
-    top: 100%; /* Spretter ned rett under prikkene */
+    right: 0;
+    top: 100%;
     background-color: white;
     border: 1px solid #ddd;
     border-radius: 5px;
@@ -108,9 +110,10 @@
     z-index: 10;
 }
 
-/* Gjør slett-knappen litt finere */
-.delete-btn {
-    color: red;
+
+.delete-btn, .rename-btn {
+
+    color: #333;
     background: none;
     border: none;
     padding: 8px 12px;
@@ -120,5 +123,5 @@
 }
 
 .delete-btn:hover {
-    background-color: #ffe6e6; /* Lys rød bakgrunn når man hovrer over "Slett" */
+    background-color: #ffe6e6;
 }

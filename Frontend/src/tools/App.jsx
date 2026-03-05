@@ -13,6 +13,7 @@ function App() {
      const [activeProject, setActiveProject] = useState("Project 1");
      const chat = useChat(activeProject);
 
+
     return (
         <div className="app">
             <Sidebar
@@ -20,6 +21,8 @@ function App() {
                 setProjects={setProjects}
                 activeProject={activeProject}
                 setActiveProject={setActiveProject}
+                renameProjectMessages={chat.renameProjectMessages}
+
              />
 
             <ChatPanel activeProject={activeProject} {...chat} />

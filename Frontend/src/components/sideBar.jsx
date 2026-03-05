@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import "../Styles/Sidebar.css";
 
 
-export default function Sidebar({ projects, setProjects, activeProject, setActiveProject}) {
+export default function Sidebar({ projects, setProjects, activeProject, setActiveProject, renameProjectMessages }) {
 
     const [openMenu, setOpenMenu] = useState(null);
 
@@ -40,11 +40,28 @@ export default function Sidebar({ projects, setProjects, activeProject, setActiv
         }
     };
 
+   const handleRenameProject = (ProjectToBeRenamed) => {
+        const newProjectName = prompt("Enter the new name of the project?", ProjectToBeRenamed);
+        if (newProjectName && newProjectName !== ProjectToBeRenamed) {
+            const updatedProjects = projects.map(project =>
+                project === ProjectToBeRenamed ? newProjectName : project
+            );
+            setProjects(updatedProjects);
+            if (activeProject === ProjectToBeRenamed) {
+                setActiveProject(newProjectName);
+            }
+            renameProjectMessages(ProjectToBeRenamed, newProjectName);
+
+        }
+    }
 
 
 
 
-// --- SKJERMEN (HTML/JSX) ---
+
+
+
+
     return (
         <div className="sidebar">
             <div className="new-project-container">
@@ -60,36 +77,48 @@ export default function Sidebar({ projects, setProjects, activeProject, setActiv
                     {projects.map((project, index) => (
                         <li
                             key={index}
-                            // Viktig: Her MÅ du bruke backticks (skrå anførselstegn), ikke vanlige!
+
                             className={`project-item ${activeProject === project ? "active" : ""}`}
                             onClick={() => setActiveProject(project)}
                         >
-                            {/* Vi legger prosjektnavnet i en egen boks */}
+                            {}
                             <span className="project-name">{project}</span>
 
-                            {/* HER BEGYNNER TRE-PRIKKER-MENYEN */}
+                            {}
                             <div className="menu-container">
-                                {/* Selve prikk-knappen */}
+                                {}
                                 <button className="three-dots-btn" onClick={(e) => toggleMenu(project, e)}>
                                     ⋮
                                 </button>
 
-                                {/* Dette tegnes BARE hvis openMenu er lik dette prosjektet */}
+                                {}
                                 {openMenu === project && (
                                     <div className="dropdown-menu">
                                         <button
                                             className="delete-btn"
                                             onClick={(e) => {
-                                                e.stopPropagation(); // Stopp klikket fra å treffe li-en
-                                                handleDeleteProject(project); // Kjør slette-funksjonen din!
+                                                e.stopPropagation();
+                                                handleDeleteProject(project);
                                             }}
                                         >
-                                            Delete
+                                              Delete
                                         </button>
+
+
+                                        <button
+                                        className="rename-btn"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleRenameProject(project);
+                                        }}
+                                        >
+                                            Rename
+                                        </button>
+
                                     </div>
                                 )}
                             </div>
-                            {/* HER SLUTTER TRE-PRIKKER-MENYEN */}
+                            {}
 
                         </li>
                     ))}

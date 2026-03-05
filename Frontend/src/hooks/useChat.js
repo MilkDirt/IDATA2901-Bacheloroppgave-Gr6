@@ -14,12 +14,24 @@ export function useChat(activeProject) {
     }, [messages, loading]);
 
 
+
+
     const addMessageToProject = (newMessage) => {
     setChatHistories((prev) => ({
         ...prev,
         [activeProject]: [...(prev[activeProject] || []), newMessage],
     }));
 };
+
+
+    const renameProjectMessages = (oldName, newName) => {
+    setChatHistories((prev) => {
+    const newChatHistories = {...prev}
+    newChatHistories[newName] = newChatHistories[oldName];
+    delete newChatHistories[oldName];
+    return newChatHistories;
+    });
+    };
 
     const sendMessage = async () => {
         const text = input.trim();
@@ -71,5 +83,7 @@ export function useChat(activeProject) {
         loading,
         sendMessage,
         messagesEndRef,
+        renameProjectMessages,
+
     };
 }
