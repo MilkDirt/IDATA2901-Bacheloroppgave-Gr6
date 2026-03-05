@@ -1,12 +1,30 @@
 import React, { useState, useRef } from "react";
-import Sidebar from "./components/Sidebar";
+import Sidebar from "./components/sideBar";
 import ChatPanel from "./components/ChatPanel";
 import QueryPanel from "./components/QueryPanel";
+import { useChat } from "./hooks/useChat";
 import "./Styles/global.css";
 
 function App() {
-  // Chat state
-  const [messages, setMessages] = useState([]);
+  const [projects, setProjects] = useState(["Project 1", "Project 2", "Project 3"]);
+  const [activeProject, setActiveProject] = useState("Project 1");
+
+
+
+  const renameProjectMessages = (oldName, newName) => {
+  setMessages((prev) => {
+    const updated = { ...prev };
+    if (updated[oldName]) {
+      updated[newName] = updated[oldName];
+      delete updated[oldName];
+    }
+    return updated;
+  });
+};
+
+
+
+  const [messages, setMessages] = useState({});
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -27,15 +45,23 @@ function App() {
   });
 
   const messagesEndRef = useRef(null);
+  const activeMessages = messages[activeProject] || [];
+
+
 
   // Normal chat
   const sendMessage = async () => {
-    if (!input.trim()) return;
+  if (!input.trim()) return;
 
-    const userMessage = { role: "user", content: input };
+  const userMessage = { role: "user", content: input };
 
-    setMessages(prev => [...prev, userMessage]);
-    setLoading(true);
+  setMessages(prev => ({
+    ...prev,
+    [activeProject]: [...(prev[activeProject] || []), userMessage]
+  }));
+
+  setLoading(true);
+
 
     try {
       const response = await fetch("http://127.0.0.1:8000/ask", {
@@ -48,14 +74,17 @@ function App() {
 
       const data = await response.json();
 
-      setMessages(prev => [
+      setMessages(prev => ({
         ...prev,
-        {
-          role: "assistant",
-          content: data.answer,
-          sources: data.sources || []
-        }
-      ]);
+        [activeProject]: [
+          ...(prev[activeProject] || []),
+          {
+            role: "assistant",
+            content: data.answer,
+            sources: data.sources || []
+          }
+        ]
+      }));
 
     } catch (error) {
       console.error("Error:", error);
@@ -82,13 +111,16 @@ function App() {
 
       const data = await response.json();
 
-      setMessages(prev => [
-        ...prev,
-        {
-          role: "assistant",
-          content: data.application_text
-        }
-      ]);
+    setMessages(prev => ({
+  ...prev,
+  [activeProject]: [
+    ...(prev[activeProject] || []),
+    {
+      role: "assistant",
+      content: data.application_text
+    }
+  ]
+}));
 
       setShowForm(false);
 
@@ -102,12 +134,19 @@ function App() {
   return (
     <div className="app" style={{ display: "flex" }}>
 
-      <Sidebar />
+      <Sidebar
+        projects={projects}
+        setProjects={setProjects}
+        activeProject={activeProject}
+        setActiveProject={setActiveProject}
+        renameProjectMessages={renameProjectMessages}
+       />
 
       <ChatPanel
+        activeProject={activeProject}
         input={input}
         setInput={setInput}
-        messages={messages}
+        messages={messages[activeProject] || []}
         loading={loading}
         sendMessage={sendMessage}
         messagesEndRef={messagesEndRef}
