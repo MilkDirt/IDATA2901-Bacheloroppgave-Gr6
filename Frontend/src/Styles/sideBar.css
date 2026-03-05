@@ -67,3 +67,61 @@
 .project-item:hover {
     background-color: #2A2A2A;
 }
+
+.project-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    cursor: pointer;
+
+}
+
+
+.three-dots-btn {
+    color: #888;
+    opacity: 0;
+    background: none;
+    border: none;
+    font-size: 18px;
+    cursor: pointer;
+    transition: opacity 0.2s;
+}
+
+
+.project-item:hover .three-dots-btn {
+    opacity: 1;
+    background-color: #333333
+}
+
+
+.menu-container {
+    position: relative;
+}
+
+.dropdown-menu {
+    position: absolute;
+    right: 0;
+    top: 100%;
+    background-color: white;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    z-index: 10;
+}
+
+
+.delete-btn, .rename-btn {
+
+    color: #333;
+    background: none;
+    border: none;
+    padding: 8px 12px;
+    cursor: pointer;
+    width: 100%;
+    text-align: left;
+}
+
+.delete-btn:hover {
+    background-color: #ffe6e6;
+}
