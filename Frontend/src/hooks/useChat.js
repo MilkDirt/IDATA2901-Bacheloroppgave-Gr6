@@ -8,7 +8,7 @@ export function useChat(activeProject) {
     const messagesEndRef = useRef(null);
     const messages = chatHistories[activeProject] || [];
 
-    // Auto-scroll til bunnen (also when loading toggles)
+    // Auto-scroll til bunnen
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }, [messages, loading]);

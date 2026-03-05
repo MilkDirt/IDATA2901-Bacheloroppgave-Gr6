@@ -125,9 +125,11 @@ class RAGAnswerer:
 
         system_prompt = (
             "Du er en faglig assistent. "
-            "Svar kun basert på KONTEXTEN. "
-            "Hvis svaret ikke finnes i dokumentasjonen, si det tydelig. "
-            "Avslutt svaret med kildehenvisning."
+            "Svar primært basert på KONTEKSTEN. "
+            "Hvis svaret ikke finnes direkte i dokumentasjonen, bruk sunn fornuft og si ifra at dette ikke står eksplisitt i dokumentet. Bruk kunnskapen å let etter nettet for mer info og gi kilder fra hvor "
+            "Hold svarene korte og presise  "
+            "Svar alltid i ren norsk tekst. Ikke bruk JSON, markdown, kodeblokker eller spesialtegn som ** eller ##. "
+            "Avslutt alltid svaret med en kort kildehenvisning på slutten, aldri midt i teksten."
         )
 
         user_prompt = f"""KONTEXT:
