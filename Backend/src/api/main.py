@@ -12,6 +12,11 @@ from pydantic import BaseModel
 
 from src.rag.answer import get_answerer
 
+from src.db.database import engine
+from src.db import models
+
+models.Base.metadata.create_all(bind=engine)
+
 # Initialize FastAPI application
 app = FastAPI(title="Bachelor RAG API")
 
