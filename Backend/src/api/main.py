@@ -8,19 +8,27 @@ Exposes HTTP endpoints that allow clients to:
 from fastapi import FastAPI, Depends
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy.orm import Session
+from typing import Optional
+import json
 
 from src.rag.answer import get_answerer
-from src.db.database import engine
+from src.db.database import engine, get_db
 from src.db import models
 from src.db.models import User
 from src.api.auth import router as auth_router
 from src.api.dependencies import get_current_user
+from src.api.conversations import router as conversations_router
+from src.api.conversations import get_or_create_conversation, save_message
 
 # Initialize FastAPI application FIRST
 app = FastAPI(title="Bachelor RAG API")
 
 # Register auth routes (/auth/register, /auth/login)
 app.include_router(auth_router)
+
+# Register conversation routes (/conversations/)
+app.include_router(conversations_router)
 
 # Create all database tables on startup if they don't exist
 models.Base.metadata.create_all(bind=engine)
@@ -44,8 +52,11 @@ class AskRequest(BaseModel):
 
     Attributes:
         question (str): Natural language question from the user.
+        conversation_id (Optional[int]): Optional. If provided, continues
+                        an existing conversation. If None, creates a new one.
     """
     question: str
+    conversation_id: Optional[int] = None
 
 
 @app.get("/health")
@@ -60,21 +71,48 @@ def health():
 
 
 @app.post("/ask")
-def ask(req: AskRequest, current_user: User = Depends(get_current_user)):
+def ask(
+    req: AskRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
     """
     Protected endpoint for question answering.
 
-    Requires a valid JWT token in the Authorization header.
-    Only authenticated users can query the RAG system.
+    Asks the RAG system a question, saves both the question
+    and answer to the database, and returns the answer.
 
     Args:
-        req (AskRequest): Incoming request containing the user's question.
-        current_user (User): The authenticated user, injected by FastAPI.
+        req (AskRequest): Contains the question and optional conversation_id.
+        current_user (User): The authenticated user.
+        db (Session): Database session.
 
     Returns:
-        dict: Answer, sources, and metadata from the RAG system.
+        dict: Answer, sources, conversation_id and metadata.
     """
-    return answerer.answer(req.question)
+    # Get or create a conversation for this chat session
+    conversation = get_or_create_conversation(
+        db=db,
+        user_id=current_user.id,
+        conversation_id=req.conversation_id,
+        first_question=req.question
+    )
+
+    # Save the user's question
+    save_message(db, conversation.id, "user", req.question)
+
+    # Get answer from RAG system
+    result = answerer.answer(req.question)
+
+    # Save the AI answer with sources
+    sources_str = json.dumps(result.get("sources", []))
+    save_message(db, conversation.id, "ai", result.get("answer", ""), sources_str)
+
+    # Return result with conversation_id so frontend can continue the chat
+    return {
+        **result,
+        "conversation_id": conversation.id
+    }
 
 
 @app.post("/generate-application")

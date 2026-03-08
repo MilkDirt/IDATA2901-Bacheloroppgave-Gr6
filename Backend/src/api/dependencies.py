@@ -4,10 +4,13 @@ Shared FastAPI dependencies for the RAG API.
 This module provides reusable dependency functions that can be
 injected into any FastAPI endpoint using FastAPI's Depends() system.
 
+Currently provides:
+- get_current_user: Extracts and validates the JWT token from the
+  request header and returns the authenticated user from the database.
 """
 
-from fastapi import Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordBearer
+from fastapi import Depends, HTTPException, Security, status
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
 from jose import jwt, JWTError
 
@@ -15,17 +18,15 @@ from src.db.database import get_db
 from src.db.models import User
 from src.api.auth import SECRET_KEY, ALGORITHM
 
-# OAuth2PasswordBearer tells FastAPI to look for a Bearer token
+# HTTPBearer tells FastAPI to look for a Bearer token
 # in the Authorization header of incoming requests.
-# The tokenUrl points to the login endpoint.
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
+security = HTTPBearer()
 
 
 def get_current_user(
-    token: str = Depends(oauth2_scheme),
+    credentials: HTTPAuthorizationCredentials = Security(security),
     db: Session = Depends(get_db)
 ) -> User:
-
     """
     Dependency that validates the JWT token and returns the current user.
 
@@ -36,14 +37,16 @@ def get_current_user(
     - Reference a user that no longer exists in the database
 
     Args:
-        token (str): JWT token extracted from the Authorization header.
+        credentials: HTTP Bearer credentials from the Authorization header.
         db (Session): Database session injected by FastAPI.
 
     Returns:
         User: The authenticated user object from the database.
 
+    Raises:
+        HTTPException 401: If the token is missing, invalid, or expired.
+        HTTPException 404: If the user in the token no longer exists.
     """
-
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
@@ -51,10 +54,13 @@ def get_current_user(
     )
 
     try:
+        # Extract the raw token string from the credentials
+        token = credentials.credentials
+
         # Decode the JWT token using our secret key
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
 
-        # Extract the user ID stored in the token
+        # Extract the user ID stored in the token ("sub" = subject)
         user_id: str = payload.get("sub")
         if user_id is None:
             raise credentials_exception
