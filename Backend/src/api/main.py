@@ -6,19 +6,23 @@ Exposes HTTP endpoints that allow clients to:
 - Check service health
 - Ask questions and receive grounded answers from documents
 """
-
 from fastapi import FastAPI
 from pydantic import BaseModel
+from fastapi.middleware.cors import CORSMiddleware
 
 from src.rag.answer import get_answerer
-
 from src.db.database import engine
 from src.db import models
+from src.api.auth import router as auth_router
 
-models.Base.metadata.create_all(bind=engine)
-
-# Initialize FastAPI application
+# Initialize FastAPI application FIRST
 app = FastAPI(title="Bachelor RAG API")
+
+# Then include routers
+app.include_router(auth_router)
+
+# Create tables
+models.Base.metadata.create_all(bind=engine)
 
 #Testing to connect front to backend
 from fastapi.middleware.cors import CORSMiddleware
