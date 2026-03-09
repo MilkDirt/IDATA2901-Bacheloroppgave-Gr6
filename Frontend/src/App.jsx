@@ -1,168 +1,179 @@
+/**
+ * App.jsx
+ *
+ * Root component of the application.
+ * Checks if the user is logged in and either shows
+ * the login page or the main chat interface.
+ */
+
 import React, { useState, useRef } from "react";
 import Sidebar from "./components/sideBar";
 import ChatPanel from "./components/ChatPanel";
 import QueryPanel from "./components/QueryPanel";
-import { useChat } from "./hooks/useChat";
+import LoginPage from "./components/LoginPage";
+import { useAuth } from "./hooks/useAuth";
 import "./Styles/global.css";
 
 function App() {
-  const [projects, setProjects] = useState(["Project 1", "Project 2", "Project 3"]);
-  const [activeProject, setActiveProject] = useState("Project 1");
+    const { token, user, authError, authLoading, login, register, logout, isLoggedIn } = useAuth();
 
+    const [messages, setMessages] = useState({});
+    const [input, setInput] = useState("");
+    const [loading, setLoading] = useState(false);
+    const [activeConversationId, setActiveConversationId] = useState(null);
+    const [showForm, setShowForm] = useState(false);
+    const [formData, setFormData] = useState({
+        adresse: "",
+        gnr: "",
+        bnr: "",
+        kommune: "",
+        tiltakstype: "",
+        bra: "",
+        bya: "",
+        hoyde: "",
+        nabovarsel: false
+    });
 
+    const messagesEndRef = useRef(null);
 
-  const renameProjectMessages = (oldName, newName) => {
-  setMessages((prev) => {
-    const updated = { ...prev };
-    if (updated[oldName]) {
-      updated[newName] = updated[oldName];
-      delete updated[oldName];
-    }
-    return updated;
-  });
-};
-
-
-
-  const [messages, setMessages] = useState({});
-  const [input, setInput] = useState("");
-  const [loading, setLoading] = useState(false);
-
-  // Slide in panel state
-  const [showForm, setShowForm] = useState(false);
-
-  // Structured form data
-  const [formData, setFormData] = useState({
-    adresse: "",
-    gnr: "",
-    bnr: "",
-    kommune: "",
-    tiltakstype: "",
-    bra: "",
-    bya: "",
-    hoyde: "",
-    nabovarsel: false
-  });
-
-  const messagesEndRef = useRef(null);
-  const activeMessages = messages[activeProject] || [];
-
-
-
-  // Normal chat
-  const sendMessage = async () => {
-  if (!input.trim()) return;
-
-  const userMessage = { role: "user", content: input };
-
-  setMessages(prev => ({
-    ...prev,
-    [activeProject]: [...(prev[activeProject] || []), userMessage]
-  }));
-
-  setLoading(true);
-
-
-    try {
-      const response = await fetch("http://127.0.0.1:8000/ask", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({ question: input })
-      });
-
-      const data = await response.json();
-
-      setMessages(prev => ({
-        ...prev,
-        [activeProject]: [
-          ...(prev[activeProject] || []),
-          {
-            role: "assistant",
-            content: data.answer,
-            sources: data.sources || []
-          }
-        ]
-      }));
-
-    } catch (error) {
-      console.error("Error:", error);
+    // ── Auth gate ─────────────────────────────────────────
+    // If user is not logged in, show the login page instead
+    if (!isLoggedIn) {
+        return (
+            <LoginPage
+                onLogin={login}
+                onRegister={register}
+                authError={authError}
+                authLoading={authLoading}
+            />
+        );
     }
 
-    setLoading(false);
-  };
+    // ── Send message
+    const sendMessage = async () => {
+        if (!input.trim()) return;
 
-  // Query chat
-  const generateApplication = async () => {
-    setLoading(true);
+        const userMessage = { role: "user", content: input };
+        const conversationKey = activeConversationId || "new";
 
-    try {
-      const response = await fetch(
-        "http://127.0.0.1:8000/generate-application",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify(formData)
+        setMessages(prev => ({
+            ...prev,
+            [conversationKey]: [...(prev[conversationKey] || []), userMessage]
+        }));
+
+        setLoading(true);
+
+        try {
+            const response = await fetch("http://127.0.0.1:8000/ask", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    question: input,
+                    conversation_id: activeConversationId
+                })
+            });
+
+            const data = await response.json();
+
+            // update the active conversation ID in new conversation
+            if (!activeConversationId && data.conversation_id) {
+                setActiveConversationId(data.conversation_id);
+                setMessages(prev => ({
+                    ...prev,
+                    [data.conversation_id]: [...(prev["new"] || []), {
+                        role: "assistant",
+                        content: data.answer,
+                        sources: data.sources || []
+                    }],
+                    new: undefined
+                }));
+            } else {
+                setMessages(prev => ({
+                    ...prev,
+                    [conversationKey]: [
+                        ...(prev[conversationKey] || []),
+                        {
+                            role: "assistant",
+                            content: data.answer,
+                            sources: data.sources || []
+                        }
+                    ]
+                }));
+            }
+
+        } catch (error) {
+            console.error("Error:", error);
         }
-      );
 
-      const data = await response.json();
+        setInput("");
+        setLoading(false);
+    };
 
-    setMessages(prev => ({
-  ...prev,
-  [activeProject]: [
-    ...(prev[activeProject] || []),
-    {
-      role: "assistant",
-      content: data.application_text
-    }
-  ]
-}));
+    // ── Generate application
+    const generateApplication = async () => {
+        setLoading(true);
+        try {
+            const response = await fetch("http://127.0.0.1:8000/generate-application", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`
+                },
+                body: JSON.stringify(formData)
+            });
 
-      setShowForm(false);
+            const data = await response.json();
+            const conversationKey = activeConversationId || "new";
 
-    } catch (error) {
-      console.error("Error:", error);
-    }
+            setMessages(prev => ({
+                ...prev,
+                [conversationKey]: [
+                    ...(prev[conversationKey] || []),
+                    { role: "assistant", content: data.application_text }
+                ]
+            }));
 
-    setLoading(false);
-  };
+            setShowForm(false);
+        } catch (error) {
+            console.error("Error:", error);
+        }
+        setLoading(false);
+    };
 
-  return (
-    <div className="app" style={{ display: "flex" }}>
+    return (
+        <div className="app" style={{ display: "flex" }}>
+            <Sidebar
+                token={token}
+                user={user}
+                onLogout={logout}
+                activeConversationId={activeConversationId}
+                setActiveConversationId={setActiveConversationId}
+                setMessages={setMessages}
+            />
 
-      <Sidebar
-        projects={projects}
-        setProjects={setProjects}
-        activeProject={activeProject}
-        setActiveProject={setActiveProject}
-        renameProjectMessages={renameProjectMessages}
-       />
+            <ChatPanel
+                activeProject={activeConversationId || "new"}
+                input={input}
+                setInput={setInput}
+                messages={messages[activeConversationId || "new"] || []}
+                loading={loading}
+                sendMessage={sendMessage}
+                messagesEndRef={messagesEndRef}
+                setShowForm={setShowForm}
+            />
 
-      <ChatPanel
-        activeProject={activeProject}
-        input={input}
-        setInput={setInput}
-        messages={messages[activeProject] || []}
-        loading={loading}
-        sendMessage={sendMessage}
-        messagesEndRef={messagesEndRef}
-        setShowForm={setShowForm}   // 👈 viktig
-      />
-
-      <QueryPanel
-        show={showForm}
-        setShow={setShowForm}
-        formData={formData}
-        setFormData={setFormData}
-        generateApplication={generateApplication}
-      />
-
-    </div>
-  );
+            <QueryPanel
+                show={showForm}
+                setShow={setShowForm}
+                formData={formData}
+                setFormData={setFormData}
+                generateApplication={generateApplication}
+            />
+        </div>
+    );
 }
 
 export default App;

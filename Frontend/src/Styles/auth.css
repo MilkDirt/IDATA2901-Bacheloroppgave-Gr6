@@ -1,0 +1,164 @@
+/* ─── Auth page layout */
+.auth-wrapper {
+    height: 100vh;
+    width: 100vw;
+    background: #272E35;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: Inter, system-ui, sans-serif;
+}
+
+.auth-card {
+    background: #1B2025;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+    padding: 40px;
+    width: 100%;
+    max-width: 400px;
+}
+
+/* ─── Logo  */
+.auth-logo-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 28px;
+}
+
+.auth-logo-icon {
+    width: 36px;
+    height: 36px;
+    background: linear-gradient(135deg, #4ade80, #60a5fa);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    box-shadow: 0 0 16px rgba(74, 222, 128, 0.25);
+}
+
+.auth-logo-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #f1f5f9;
+    letter-spacing: -0.02em;
+}
+
+.auth-logo-sub {
+    font-size: 11px;
+    color: #94a3b8;
+    font-family: monospace;
+}
+
+/* ─── Headings  */
+.auth-heading {
+    font-size: 22px;
+    font-weight: 600;
+    color: #f1f5f9;
+    margin-bottom: 6px;
+    letter-spacing: -0.02em;
+}
+
+.auth-subheading {
+    font-size: 13px;
+    color: #94a3b8;
+    margin-bottom: 24px;
+}
+
+/* ─── Tabs (login / register toggle) */
+.auth-tabs {
+    display: flex;
+    gap: 0;
+    margin-bottom: 28px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.auth-tab {
+    flex: 1;
+    padding: 10px;
+    text-align: center;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    color: #94a3b8;
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    font-family: Inter, system-ui, sans-serif;
+    transition: all 0.15s;
+}
+
+.auth-tab.active {
+    color: #4ade80;
+    border-bottom: 2px solid #4ade80;
+}
+
+/* ─── Form fields */
+.auth-field {
+    margin-bottom: 16px;
+}
+
+.auth-label {
+    display: block;
+    font-size: 12px;
+    color: #94a3b8;
+    margin-bottom: 6px;
+    font-weight: 500;
+}
+
+.auth-input {
+    width: 100%;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    padding: 10px 14px;
+    color: #f1f5f9;
+    font-size: 14px;
+    font-family: Inter, system-ui, sans-serif;
+    box-sizing: border-box;
+    outline: none;
+    transition: border-color 0.15s;
+}
+
+.auth-input:focus {
+    border-color: rgba(74, 222, 128, 0.4);
+}
+
+/* ─── Error box */
+.auth-error {
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    border-radius: 8px;
+    padding: 10px 14px;
+    color: #fca5a5;
+    font-size: 13px;
+    margin-bottom: 16px;
+}
+
+/* ─── Submit button */
+.auth-button {
+    width: 100%;
+    background: linear-gradient(135deg, #22c55e, #16a34a);
+    border: none;
+    border-radius: 8px;
+    padding: 12px;
+    color: #fff;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-bottom: 16px;
+    font-family: Inter, system-ui, sans-serif;
+    box-shadow: 0 0 20px rgba(34, 197, 94, 0.25);
+    transition: opacity 0.15s;
+}
+
+.auth-button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.auth-button:hover:not(:disabled) {
+    opacity: 0.9;
+}
