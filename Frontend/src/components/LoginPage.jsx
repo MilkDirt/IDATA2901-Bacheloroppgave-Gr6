@@ -39,41 +39,40 @@ export default function LoginPage({ onLogin, onRegister, authError, authLoading 
         <div className="auth-wrapper">
             <div className="auth-card">
 
-
-                {/* Tabs */}
+                {/* Faner */}
                 <div className="auth-tabs">
                     <button
                         className={`auth-tab ${!isRegistering ? "active" : ""}`}
                         onClick={() => switchTab(false)}
                     >
-                        Log in
+                        Logg inn
                     </button>
                     <button
                         className={`auth-tab ${isRegistering ? "active" : ""}`}
                         onClick={() => switchTab(true)}
                     >
-                        Register
+                        Registrer
                     </button>
                 </div>
 
-                {/* Heading */}
+                {/* Overskrift */}
                 <h2 className="auth-heading">
-                    {isRegistering ? "Create an account" : "Welcome"}
+                    {isRegistering ? "Opprett konto" : "Velkommen"}
                 </h2>
                 <p className="auth-subheading">
                     {isRegistering
-                        ? "Register to start using the chat informasjonshenting"
-                        : "Log in to access your conversations"}
+                        ? "Registrer deg for å bruke informasjonshentingssystemet"
+                        : "Logg inn for å få tilgang til samtalene dine"}
                 </p>
 
-                {/* Name field — only shown when registering */}
+                {/* Navn — vises kun ved registrering */}
                 {isRegistering && (
                     <div className="auth-field">
-                        <label className="auth-label">Full name</label>
+                        <label className="auth-label">Fullt navn</label>
                         <input
                             className="auth-input"
                             type="text"
-                            placeholder="Your name"
+                            placeholder="Ditt navn"
                             value={name}
                             onChange={(e) => setName(e.target.value)}
                             onKeyDown={handleKeyDown}
@@ -81,22 +80,22 @@ export default function LoginPage({ onLogin, onRegister, authError, authLoading 
                     </div>
                 )}
 
-                {/* Email */}
+                {/* E-post */}
                 <div className="auth-field">
-                    <label className="auth-label">Email</label>
+                    <label className="auth-label">E-post</label>
                     <input
                         className="auth-input"
                         type="email"
-                        placeholder="you@example.com"
+                        placeholder="deg@eksempel.no"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         onKeyDown={handleKeyDown}
                     />
                 </div>
 
-                {/* Password */}
+                {/* Passord */}
                 <div className="auth-field">
-                    <label className="auth-label">Password</label>
+                    <label className="auth-label">Passord</label>
                     <input
                         className="auth-input"
                         type="password"
@@ -107,24 +106,24 @@ export default function LoginPage({ onLogin, onRegister, authError, authLoading 
                     />
                 </div>
 
-                {/* Error message from backend */}
+                {/* Feilmelding fra backend */}
                 {authError && (
                     <div className="auth-error">
                          {authError}
                     </div>
                 )}
 
-                {/* Submit button */}
+                {/* Send-knapp */}
                 <button
                     className="auth-button"
                     onClick={handleSubmit}
                     disabled={authLoading}
                 >
                     {authLoading
-                        ? "Please wait..."
+                        ? "Vennligst vent..."
                         : isRegistering
-                            ? "Create account"
-                            : "Log in"}
+                            ? "Opprett konto"
+                            : "Logg inn"}
                 </button>
 
             </div>
