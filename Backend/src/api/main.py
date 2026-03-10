@@ -4,6 +4,8 @@ API layer for the RAG-based question answering system.
 Exposes HTTP endpoints that allow clients to:
 - Check service health
 - Ask questions and receive grounded answers from documents
+- Manage user authentication
+- Manage projects and conversations
 """
 from fastapi import FastAPI, Depends
 from pydantic import BaseModel
@@ -20,6 +22,7 @@ from src.api.auth import router as auth_router
 from src.api.dependencies import get_current_user
 from src.api.conversations import router as conversations_router
 from src.api.conversations import get_or_create_conversation, save_message
+from src.api.projects import router as projects_router
 
 # Initialize FastAPI application FIRST
 app = FastAPI(title="Bachelor RAG API")
@@ -29,6 +32,9 @@ app.include_router(auth_router)
 
 # Register conversation routes (/conversations/)
 app.include_router(conversations_router)
+
+# Register project routes (/projects/)
+app.include_router(projects_router)
 
 # Create all database tables on startup if they don't exist
 models.Base.metadata.create_all(bind=engine)
@@ -52,11 +58,12 @@ class AskRequest(BaseModel):
 
     Attributes:
         question (str): Natural language question from the user.
-        conversation_id (Optional[int]): Optional. If provided, continues
-                        an existing conversation. If None, creates a new one.
+        conversation_id (Optional[int]): Continues an existing conversation.
+        project_id (Optional[int]): Links the conversation to a project.
     """
     question: str
     conversation_id: Optional[int] = None
+    project_id: Optional[int] = None
 
 
 @app.get("/health")
@@ -83,7 +90,8 @@ def ask(
     and answer to the database, and returns the answer.
 
     Args:
-        req (AskRequest): Contains the question and optional conversation_id.
+        req (AskRequest): Contains the question, optional conversation_id
+                          and optional project_id.
         current_user (User): The authenticated user.
         db (Session): Database session.
 
@@ -95,7 +103,8 @@ def ask(
         db=db,
         user_id=current_user.id,
         conversation_id=req.conversation_id,
-        first_question=req.question
+        first_question=req.question,
+        project_id=req.project_id
     )
 
     # Save the user's question

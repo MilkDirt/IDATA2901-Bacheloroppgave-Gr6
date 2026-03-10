@@ -9,6 +9,7 @@ This module handles:
 
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
+from typing import Optional
 
 from src.db.database import get_db
 from src.db.models import User, Conversation, Message
@@ -53,19 +54,21 @@ def get_or_create_conversation(
     db: Session,
     user_id: int,
     conversation_id: int = None,
-    first_question: str = None
+    first_question: str = None,
+    project_id: Optional[int] = None
 ) -> Conversation:
     """
     Get an existing conversation or create a new one.
 
     If conversation_id is provided, fetches that conversation.
-    Otherwise creates a new one, using the first question as the title.
+    Otherwise creates a new one using the first question as the title.
 
     Args:
         db (Session): Database session.
         user_id (int): The user this conversation belongs to.
         conversation_id (int): Optional existing conversation ID.
         first_question (str): Used as title if creating a new conversation.
+        project_id (Optional[int]): Optional project to link conversation to.
 
     Returns:
         Conversation: The existing or newly created conversation.
@@ -78,12 +81,13 @@ def get_or_create_conversation(
         if conversation:
             return conversation
 
-    # Create new conversation, title is first 60 chars of the question
-    title = (first_question[:60] + "...") if first_question and len(first_question) > 60 else first_question or "New Chat"
+    # Title is first 60 chars of the question
+    title = (first_question[:60] + "...") if first_question and len(first_question) > 60 else first_question or "Ny samtale"
 
     conversation = Conversation(
         user_id=user_id,
-        title=title
+        title=title,
+        project_id=project_id
     )
     db.add(conversation)
     db.commit()
@@ -117,10 +121,50 @@ def get_conversations(
         {
             "id": c.id,
             "title": c.title,
+            "project_id": c.project_id,
             "created_at": c.created_at
         }
         for c in conversations
     ]
+
+
+@router.delete("/{conversation_id}")
+def delete_conversation(
+    conversation_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Delete a conversation and all its messages.
+
+    Only the owner of the conversation can delete it.
+
+    Args:
+        conversation_id (int): The conversation to delete.
+        current_user (User): The authenticated user.
+        db (Session): Database session.
+
+    Returns:
+        dict: Confirmation message.
+    """
+    conversation = db.query(Conversation).filter(
+        Conversation.id == conversation_id,
+        Conversation.user_id == current_user.id
+    ).first()
+
+    if not conversation:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=404, detail="Samtale ikke funnet")
+
+    # Delete all messages first
+    db.query(Message).filter(
+        Message.conversation_id == conversation_id
+    ).delete()
+
+    db.delete(conversation)
+    db.commit()
+
+    return {"message": "Samtale slettet"}
 
 
 @router.get("/{conversation_id}/messages")
