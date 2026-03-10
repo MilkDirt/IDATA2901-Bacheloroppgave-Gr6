@@ -5,6 +5,7 @@ import "../Styles/Sidebar.css";
 export default function Sidebar({ projects, setProjects, activeProject, setActiveProject, renameProjectMessages }) {
 
     const [openMenu, setOpenMenu] = useState(null);
+    const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
     useEffect(() => {
         const lukkMeny = () =>{
@@ -40,6 +41,21 @@ export default function Sidebar({ projects, setProjects, activeProject, setActiv
         }
     };
 
+   const toggleSidebar = () => {
+       if (isSidebarOpen === true){
+           setIsSidebarOpen(false);
+           } else{
+               setIsSidebarOpen(true)}
+       };
+
+   const getMenuTitle = () => {
+    if (isSidebarOpen === true) {
+        return "Collapse menu";
+    } else {
+        return "Expand menu";
+    }
+};
+
    const handleRenameProject = (ProjectToBeRenamed) => {
         const newProjectName = prompt("Enter the new name of the project?", ProjectToBeRenamed);
         if (newProjectName && newProjectName !== ProjectToBeRenamed) {
@@ -63,7 +79,14 @@ export default function Sidebar({ projects, setProjects, activeProject, setActiv
 
 
     return (
-        <div className="sidebar">
+        <div className={isSidebarOpen === true ? "sidebar" : "sidebar collapsed"}>
+            <button
+            className="toggle-sidebar-btn"
+            onClick={() => setIsSidebarOpen(toggleSidebar)}
+            title={getMenuTitle()}
+           >
+               ☰
+            </button>
             <div className="new-project-container">
                 <button className="new-project-btn" onClick={handleAddProject}>
                     + New Project
