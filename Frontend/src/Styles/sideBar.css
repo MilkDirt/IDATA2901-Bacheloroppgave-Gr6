@@ -8,12 +8,14 @@
     flex-direction: column;
     border-right: 1px solid #333;
     font-family: sans-serif;
+    transition: width 0.3s ease;
+    overflow: hidden;
+    white-space: nowrap;
 }
 
 
 .new-project-container {
     padding: 20px;
-
     border-bottom: 1px solid #333;
 }
 
@@ -124,4 +126,34 @@
 
 .delete-btn:hover {
     background-color: #ffe6e6;
+}
+
+.toggle-sidebar-btn {
+    background: transparent;
+    border: none;
+    color: white;
+    font-size: 24px;
+
+    width: 60px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    flex-shrink: 0;
+
+
+}
+
+.toggle-sidebar-btn:hover {
+    background-color: #333;
+}
+
+.sidebar.collapsed {
+    width: 110px;
+}
+.sidebar.collapsed .new-project-container,
+.sidebar.collapsed .projects-section {
+    display: none;
 }

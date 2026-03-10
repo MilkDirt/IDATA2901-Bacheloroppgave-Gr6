@@ -21,11 +21,12 @@ export default function Sidebar({
                                     setMessages,
                                 }) {
     const [conversations, setConversations] = useState([]);
+    const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
     /**
      * Fetch all conversations for the logged in user.
      * Called on mount and whenever activeConversationId changes
-     * (so the sidebar updates after a new conversation is created).
+     * so the sidebar updates after a new conversation is created.
      */
     useEffect(() => {
         fetchConversations();
@@ -91,23 +92,32 @@ export default function Sidebar({
     };
 
     return (
-        <div className="sidebar">
+        <div className={isSidebarOpen ? "sidebar" : "sidebar collapsed"}>
+
+            {/* Collapse/expand toggle */}
+            <button
+                className="toggle-sidebar-btn"
+                onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+                title={isSidebarOpen ? "Skjul meny" : "Vis meny"}
+            >
+                ☰
+            </button>
 
             {/* New chat button */}
             <div className="new-project-container">
                 <button className="new-project-btn" onClick={handleNewChat}>
-                    + New Chat
+                    + Ny samtale
                 </button>
             </div>
 
             {/* Conversation list */}
             <div className="projects-section">
-                <h3>Conversations</h3>
+                <h3>Samtaler</h3>
 
                 <ul className="projects-list">
                     {conversations.length === 0 && (
                         <li style={{ color: "#888", fontSize: "13px", padding: "8px 0" }}>
-                            No conversations yet
+                            Ingen samtaler ennå
                         </li>
                     )}
                     {conversations.map((conv) => (
@@ -129,7 +139,7 @@ export default function Sidebar({
                 marginTop: "auto",
             }}>
                 <div style={{ fontSize: "13px", color: "#94a3b8", marginBottom: "8px" }}>
-                    Logged in as
+                    Innlogget som
                 </div>
                 <div style={{ fontSize: "14px", color: "#f1f5f9", marginBottom: "12px", fontWeight: "500" }}>
                     {user?.name}
@@ -148,7 +158,7 @@ export default function Sidebar({
                         fontFamily: "Inter, system-ui, sans-serif",
                     }}
                 >
-                    Log out
+                    Logg ut
                 </button>
             </div>
 
