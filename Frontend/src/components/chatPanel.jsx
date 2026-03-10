@@ -3,16 +3,7 @@ import React, { useRef, useEffect } from "react";
 import sendIcon from "../assets/button.png";
 import "../Styles/chat.css";
 
-export default function ChatPanel({
-    activeProject,
-    input,
-    setInput,
-    messages,
-    loading,
-    sendMessage,
-    messagesEndRef,
-    setShowForm,
-    }) {
+export default function ChatPanel({ input, setInput, messages, loading, sendMessage, messagesEndRef, setShowForm }) {
     const textareaRef = useRef(null);
 
     const resizeTextarea = () => {
@@ -25,11 +16,10 @@ export default function ChatPanel({
     // Set initial height on mount
     useEffect(resizeTextarea, []);
 
-
     // Scroll to latest message
     useEffect(() => {
         messagesEndRef?.current?.scrollIntoView({ behavior: "smooth" });
-    }, [messages, loading, messagesEndRef]);
+    }, [messages, loading]);
 
     const handleSend = () => {
         if (!input.trim() || loading) return;
@@ -41,17 +31,6 @@ export default function ChatPanel({
     return (
         <div className={`main ${messages.length === 0 ? "main--empty" : "main--active"}`}>
             <div className="chat-col">
-
-                 <div className="chat-header" style={{ padding: '10px', borderBottom: '1px solid #eee', marginBottom: '10px' }}>
-                    <h2 style={{ margin: 0, fontSize: '1.2rem', color: '#555' }}>
-                        Prosjekt: {activeProject}
-                    </h2>
-                </div>
-
-
-
-
-
 
                 <div className="chat-container">
                     {messages.map((msg, i) => (
