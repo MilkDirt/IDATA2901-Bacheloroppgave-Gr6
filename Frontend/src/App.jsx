@@ -21,6 +21,7 @@ function App() {
     const [input, setInput] = useState("");
     const [loading, setLoading] = useState(false);
     const [activeConversationId, setActiveConversationId] = useState(null);
+    const [activeProjectId, setActiveProjectId] = useState(null);
     const [showForm, setShowForm] = useState(false);
     const [formData, setFormData] = useState({
         adresse: "",
@@ -72,7 +73,8 @@ function App() {
                 },
                 body: JSON.stringify({
                     question: input,
-                    conversation_id: activeConversationId
+                    conversation_id: activeConversationId,
+                    project_id: activeProjectId
                 })
             });
 
@@ -152,6 +154,8 @@ function App() {
                 activeConversationId={activeConversationId}
                 setActiveConversationId={setActiveConversationId}
                 setMessages={setMessages}
+                activeProjectId={activeProjectId}
+                setActiveProjectId={setActiveProjectId}
             />
 
             <ChatPanel

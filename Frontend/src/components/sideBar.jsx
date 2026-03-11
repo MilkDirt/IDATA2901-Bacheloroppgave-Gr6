@@ -1,10 +1,11 @@
 /**
  * sideBar.jsx
  *
- * Sidebar component that displays the user's conversation history.
- * Fetches conversations from the backend on mount and when a new
- * conversation is created. Allows the user to switch between
- * conversations and start new ones.
+ * Sidebar component that displays the user's projects and conversations.
+ * - Projects group conversations together
+ * - Conversations can also exist without a project
+ * - Supports creating and deleting projects
+ * - Supports deleting conversations
  */
 
 import React, { useState, useEffect } from "react";
@@ -19,63 +20,149 @@ export default function Sidebar({
                                     activeConversationId,
                                     setActiveConversationId,
                                     setMessages,
+                                    activeProjectId,
+                                    setActiveProjectId,
                                 }) {
     const [conversations, setConversations] = useState([]);
+    const [projects, setProjects] = useState([]);
+    const [expandedProjects, setExpandedProjects] = useState({});
+    const [projectConversations, setProjectConversations] = useState({});
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+    const [newProjectName, setNewProjectName] = useState("");
+    const [showNewProjectInput, setShowNewProjectInput] = useState(false);
+
+    useEffect(() => {
+        if (token) {
+            fetchConversations();
+            fetchProjects();
+        }
+    }, [activeConversationId, token]);
 
     /**
-     * Fetch all conversations for the logged in user.
-     * Called on mount and whenever activeConversationId changes
-     * so the sidebar updates after a new conversation is created.
+     * Fetch all conversations that don't belong to a project.
      */
-    useEffect(() => {
-        fetchConversations();
-    }, [activeConversationId]);
-
     const fetchConversations = async () => {
         try {
             const response = await fetch(`${API_BASE}/conversations/`, {
-                headers: {
-                    "Authorization": `Bearer ${token}`
-                }
+                headers: { "Authorization": `Bearer ${token}` }
             });
+            if (!response.ok) return;
             const data = await response.json();
-            setConversations(data);
+            const all = Array.isArray(data) ? data : [];
+            // Only show conversations without a project here
+            setConversations(all.filter(c => !c.project_id));
         } catch (error) {
             console.error("Failed to fetch conversations:", error);
         }
     };
 
     /**
-     * Load a conversation's messages when clicked in the sidebar.
-     * Fetches all messages for that conversation and sets them in state.
-     *
-     * @param {number} conversationId - The conversation to load
+     * Fetch all projects for the logged in user.
+     */
+    const fetchProjects = async () => {
+        try {
+            const response = await fetch(`${API_BASE}/projects/`, {
+                headers: { "Authorization": `Bearer ${token}` }
+            });
+            if (!response.ok) return;
+            const data = await response.json();
+            setProjects(Array.isArray(data) ? data : []);
+        } catch (error) {
+            console.error("Failed to fetch projects:", error);
+        }
+    };
+
+    /**
+     * Fetch conversations for a specific project.
+     */
+    const fetchProjectConversations = async (projectId) => {
+        try {
+            const response = await fetch(
+                `${API_BASE}/projects/${projectId}/conversations`,
+                { headers: { "Authorization": `Bearer ${token}` } }
+            );
+            if (!response.ok) return;
+            const data = await response.json();
+            setProjectConversations(prev => ({
+                ...prev,
+                [projectId]: Array.isArray(data) ? data : []
+            }));
+        } catch (error) {
+            console.error("Failed to fetch project conversations:", error);
+        }
+    };
+
+    /**
+     * Toggle a project open or closed in the sidebar.
+     */
+    const toggleProject = (projectId) => {
+        const isExpanded = expandedProjects[projectId];
+        setExpandedProjects(prev => ({ ...prev, [projectId]: !isExpanded }));
+        if (!isExpanded) {
+            fetchProjectConversations(projectId);
+        }
+    };
+
+    /**
+     * Create a new project.
+     */
+    const createProject = async () => {
+        if (!newProjectName.trim()) return;
+        try {
+            const response = await fetch(`${API_BASE}/projects/`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`
+                },
+                body: JSON.stringify({ name: newProjectName })
+            });
+            if (!response.ok) return;
+            const data = await response.json();
+            setProjects(prev => [data, ...prev]);
+            setNewProjectName("");
+            setShowNewProjectInput(false);
+        } catch (error) {
+            console.error("Failed to create project:", error);
+        }
+    };
+
+    /**
+     * Delete a project. Conversations become project-less.
+     */
+    const deleteProject = async (projectId, e) => {
+        e.stopPropagation();
+        if (!window.confirm("Vil du slette dette prosjektet? Samtalene beholdes.")) return;
+        try {
+            const response = await fetch(`${API_BASE}/projects/${projectId}`, {
+                method: "DELETE",
+                headers: { "Authorization": `Bearer ${token}` }
+            });
+            if (!response.ok) return;
+            setProjects(prev => prev.filter(p => p.id !== projectId));
+            if (activeProjectId === projectId) setActiveProjectId(null);
+            fetchConversations();
+        } catch (error) {
+            console.error("Failed to delete project:", error);
+        }
+    };
+
+    /**
+     * Load a conversation's messages when clicked.
      */
     const loadConversation = async (conversationId) => {
         try {
             const response = await fetch(
                 `${API_BASE}/conversations/${conversationId}/messages`,
-                {
-                    headers: {
-                        "Authorization": `Bearer ${token}`
-                    }
-                }
+                { headers: { "Authorization": `Bearer ${token}` } }
             );
             const data = await response.json();
-
-            // Format messages to match the frontend message structure
             const formatted = data.map((msg) => ({
                 role: msg.role === "ai" ? "assistant" : "user",
                 content: msg.content,
                 sources: msg.sources ? JSON.parse(msg.sources) : [],
             }));
-
-            setMessages((prev) => ({
-                ...prev,
-                [conversationId]: formatted,
-            }));
-
+            setMessages((prev) => ({ ...prev, [conversationId]: formatted }));
             setActiveConversationId(conversationId);
         } catch (error) {
             console.error("Failed to load conversation:", error);
@@ -83,11 +170,42 @@ export default function Sidebar({
     };
 
     /**
-     * Start a fresh new conversation.
-     * Clears the active conversation so the next message creates a new one.
+     * Delete a conversation.
      */
-    const handleNewChat = () => {
+    const deleteConversation = async (conversationId, e) => {
+        e.stopPropagation();
+        if (!window.confirm("Er du sikker på at du vil slette denne samtalen?")) return;
+        try {
+            const response = await fetch(
+                `${API_BASE}/conversations/${conversationId}`,
+                {
+                    method: "DELETE",
+                    headers: { "Authorization": `Bearer ${token}` }
+                }
+            );
+            if (!response.ok) return;
+            setConversations(prev => prev.filter(c => c.id !== conversationId));
+            setProjectConversations(prev => {
+                const updated = { ...prev };
+                for (const pid in updated) {
+                    updated[pid] = updated[pid].filter(c => c.id !== conversationId);
+                }
+                return updated;
+            });
+            if (activeConversationId === conversationId) {
+                setActiveConversationId(null);
+            }
+        } catch (error) {
+            console.error("Failed to delete conversation:", error);
+        }
+    };
+
+    /**
+     * Start a new conversation, optionally inside a project.
+     */
+    const handleNewChat = (projectId = null) => {
         setActiveConversationId(null);
+        setActiveProjectId(projectId);
         setMessages((prev) => ({ ...prev, new: [] }));
     };
 
@@ -105,18 +223,131 @@ export default function Sidebar({
 
             {/* New chat button */}
             <div className="new-project-container">
-                <button className="new-project-btn" onClick={handleNewChat}>
+                <button className="new-project-btn" onClick={() => handleNewChat(null)}>
                     + Ny samtale
                 </button>
             </div>
 
-            {/* Conversation list */}
             <div className="projects-section">
-                <h3>Samtaler</h3>
 
+                {/* Projects */}
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
+                    <h3 style={{ margin: 0 }}>Prosjekter</h3>
+                    <button
+                        onClick={() => setShowNewProjectInput(!showNewProjectInput)}
+                        style={{
+                            background: "none", border: "none",
+                            color: "#F47920", cursor: "pointer",
+                            fontSize: "18px", lineHeight: 1,
+                        }}
+                        title="Nytt prosjekt"
+                    >+</button>
+                </div>
+
+                {/* New project input */}
+                {showNewProjectInput && (
+                    <div style={{ display: "flex", gap: "6px", marginBottom: "10px" }}>
+                        <input
+                            value={newProjectName}
+                            onChange={e => setNewProjectName(e.target.value)}
+                            onKeyDown={e => e.key === "Enter" && createProject()}
+                            placeholder="Prosjektnavn..."
+                            autoFocus
+                            style={{
+                                flex: 1, background: "rgba(255,255,255,0.06)",
+                                border: "1px solid rgba(255,255,255,0.12)",
+                                borderRadius: "6px", padding: "6px 10px",
+                                color: "#e5e7eb", fontSize: "12px",
+                                fontFamily: "Inter, system-ui, sans-serif",
+                            }}
+                        />
+                        <button
+                            onClick={createProject}
+                            style={{
+                                background: "#F47920", border: "none",
+                                borderRadius: "6px", padding: "6px 10px",
+                                color: "#fff", cursor: "pointer",
+                                fontSize: "12px", fontWeight: "600",
+                            }}
+                        >OK</button>
+                    </div>
+                )}
+
+                {/* Project list */}
+                {projects.length === 0 && (
+                    <div className="empty-state" style={{ marginBottom: "16px" }}>
+                        Ingen prosjekter ennå
+                    </div>
+                )}
+
+                {projects.map(project => (
+                    <div key={project.id} style={{ marginBottom: "4px" }}>
+                        {/* Project header */}
+                        <div
+                            className="project-item"
+                            onClick={() => toggleProject(project.id)}
+                            style={{ fontWeight: "500" }}
+                        >
+                            <span style={{ marginRight: "6px", fontSize: "11px" }}>
+                                {expandedProjects[project.id] ? "▼" : "▶"}
+                            </span>
+                            <span className="project-name">📁 {project.name}</span>
+                            <button
+                                className="delete-conversation-btn"
+                                onClick={(e) => deleteProject(project.id, e)}
+                                title="Slett prosjekt"
+                            >✕</button>
+                        </div>
+
+                        {/* Project conversations */}
+                        {expandedProjects[project.id] && (
+                            <div style={{ marginLeft: "16px" }}>
+                                <button
+                                    onClick={() => handleNewChat(project.id)}
+                                    style={{
+                                        width: "100%", background: "none",
+                                        border: "1px dashed #444", borderRadius: "5px",
+                                        color: "#888", cursor: "pointer",
+                                        padding: "5px", fontSize: "12px",
+                                        marginBottom: "4px",
+                                        fontFamily: "Inter, system-ui, sans-serif",
+                                    }}
+                                >
+                                    + Ny samtale
+                                </button>
+                                {(projectConversations[project.id] || []).length === 0 ? (
+                                    <div className="empty-state">Ingen samtaler ennå</div>
+                                ) : (
+                                    <ul className="projects-list">
+                                        {(projectConversations[project.id] || []).map(conv => (
+                                            <li
+                                                key={conv.id}
+                                                className={`project-item ${activeConversationId === conv.id ? "active" : ""}`}
+                                                onClick={() => loadConversation(conv.id)}
+                                            >
+                                                <span className="project-name">{conv.title}</span>
+                                                <button
+                                                    className="delete-conversation-btn"
+                                                    onClick={(e) => deleteConversation(conv.id, e)}
+                                                    title="Slett samtale"
+                                                >✕</button>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                )}
+                            </div>
+                        )}
+                    </div>
+                ))}
+
+                {/* Divider */}
+                <div style={{ borderTop: "1px solid #333", margin: "12px 0" }} />
+
+                {/* Conversations without project */}
+                <h3>Samtaler</h3>
                 <ul className="projects-list">
                     {conversations.length === 0 && (
-                        <li style={{ color: "#888", fontSize: "13px", padding: "8px 0" }}>
+                        <li className="empty-state">
                             Ingen samtaler ennå
                         </li>
                     )}
@@ -127,12 +358,17 @@ export default function Sidebar({
                             onClick={() => loadConversation(conv.id)}
                         >
                             <span className="project-name">{conv.title}</span>
+                            <button
+                                className="delete-conversation-btn"
+                                onClick={(e) => deleteConversation(conv.id, e)}
+                                title="Slett samtale"
+                            >✕</button>
                         </li>
                     ))}
                 </ul>
             </div>
 
-            {/* User info and logout at the bottom */}
+            {/* User info and logout */}
             <div style={{
                 padding: "16px 20px",
                 borderTop: "1px solid #333",
@@ -147,14 +383,10 @@ export default function Sidebar({
                 <button
                     onClick={onLogout}
                     style={{
-                        width: "100%",
-                        padding: "8px",
-                        background: "transparent",
-                        border: "1px solid #444",
-                        borderRadius: "6px",
-                        color: "#94a3b8",
-                        cursor: "pointer",
-                        fontSize: "13px",
+                        width: "100%", padding: "8px",
+                        background: "transparent", border: "1px solid #444",
+                        borderRadius: "6px", color: "#94a3b8",
+                        cursor: "pointer", fontSize: "13px",
                         fontFamily: "Inter, system-ui, sans-serif",
                     }}
                 >
