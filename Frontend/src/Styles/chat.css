@@ -147,3 +147,42 @@
 .send-btn:disabled .send-icon {
     opacity: 0.15;
 }
+
+/* ─── Input row with søknad icon ─────────────────────── */
+.input-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: min(760px, 100%);
+    padding-bottom: 20px;
+}
+
+.input-row .input-container {
+    flex: 1;
+    padding: 0;
+    width: 100%;
+}
+
+.soknad-icon-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    flex-shrink: 0;
+    opacity: 0.55;
+    transition: opacity 0.2s ease, filter 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.soknad-icon-btn:hover {
+    opacity: 1;
+    filter: brightness(2);
+}
+
+.soknad-icon {
+    width: 52px;
+    height: 52px;
+    display: block;
+}

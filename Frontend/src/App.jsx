@@ -1,168 +1,162 @@
+/**
+ * App.jsx
+ *
+ * Root component of the application.
+ * Checks if the user is logged in and either shows
+ * the login page or the main chat interface.
+ */
+
 import React, { useState, useRef } from "react";
 import Sidebar from "./components/sideBar";
 import ChatPanel from "./components/ChatPanel";
 import QueryPanel from "./components/QueryPanel";
-import { useChat } from "./hooks/useChat";
+import LoginPage from "./components/LoginPage";
+import { useAuth } from "./hooks/useAuth";
 import "./Styles/global.css";
 
+const API_BASE = "http://127.0.0.1:8000";
+
 function App() {
-  const [projects, setProjects] = useState(["Project 1", "Project 2", "Project 3"]);
-  const [activeProject, setActiveProject] = useState("Project 1");
+    const { token, user, authError, authLoading, login, register, logout, isLoggedIn } = useAuth();
 
+    const [messages, setMessages] = useState({});
+    const [input, setInput] = useState("");
+    const [loading, setLoading] = useState(false);
+    const [activeConversationId, setActiveConversationId] = useState(null);
+    const [activeProjectId, setActiveProjectId] = useState(null);
+    const [showForm, setShowForm] = useState(false);
+    const [formData, setFormData] = useState({
+        adresse: "", gnr: "", bnr: "", kommune: "",
+        tiltakstype: "", bra: "", bya: "", hoyde: "",
+        nabovarsel: false
+    });
 
+    const messagesEndRef = useRef(null);
 
-  const renameProjectMessages = (oldName, newName) => {
-  setMessages((prev) => {
-    const updated = { ...prev };
-    if (updated[oldName]) {
-      updated[newName] = updated[oldName];
-      delete updated[oldName];
-    }
-    return updated;
-  });
-};
-
-
-
-  const [messages, setMessages] = useState({});
-  const [input, setInput] = useState("");
-  const [loading, setLoading] = useState(false);
-
-  // Slide in panel state
-  const [showForm, setShowForm] = useState(false);
-
-  // Structured form data
-  const [formData, setFormData] = useState({
-    adresse: "",
-    gnr: "",
-    bnr: "",
-    kommune: "",
-    tiltakstype: "",
-    bra: "",
-    bya: "",
-    hoyde: "",
-    nabovarsel: false
-  });
-
-  const messagesEndRef = useRef(null);
-  const activeMessages = messages[activeProject] || [];
-
-
-
-  // Normal chat
-  const sendMessage = async () => {
-  if (!input.trim()) return;
-
-  const userMessage = { role: "user", content: input };
-
-  setMessages(prev => ({
-    ...prev,
-    [activeProject]: [...(prev[activeProject] || []), userMessage]
-  }));
-
-  setLoading(true);
-
-
-    try {
-      const response = await fetch("http://127.0.0.1:8000/ask", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({ question: input })
-      });
-
-      const data = await response.json();
-
-      setMessages(prev => ({
-        ...prev,
-        [activeProject]: [
-          ...(prev[activeProject] || []),
-          {
-            role: "assistant",
-            content: data.answer,
-            sources: data.sources || []
-          }
-        ]
-      }));
-
-    } catch (error) {
-      console.error("Error:", error);
+    /** Show login/register page if not authenticated */
+    if (!isLoggedIn) {
+        return (
+            <LoginPage
+                onLogin={login}
+                onRegister={register}
+                authError={authError}
+                authLoading={authLoading}
+            />
+        );
     }
 
-    setLoading(false);
-  };
+    /** Send user message to /ask and append the AI response */
+    const sendMessage = async () => {
+        if (!input.trim()) return;
 
-  // Query chat
-  const generateApplication = async () => {
-    setLoading(true);
+        const conversationKey = activeConversationId || "new";
 
-    try {
-      const response = await fetch(
-        "http://127.0.0.1:8000/generate-application",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify(formData)
+        setMessages(prev => ({
+            ...prev,
+            [conversationKey]: [...(prev[conversationKey] || []), { role: "user", content: input }]
+        }));
+        setLoading(true);
+
+        try {
+            const response = await fetch(`${API_BASE}/ask`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    question: input,
+                    conversation_id: activeConversationId,
+                    project_id: activeProjectId
+                })
+            });
+
+            const data = await response.json();
+            const aiMessage = { role: "assistant", content: data.answer, sources: data.sources || [] };
+
+            if (!activeConversationId && data.conversation_id) {
+                /** First message — move messages from "new" key to real conversation ID */
+                setActiveConversationId(data.conversation_id);
+                setMessages(prev => ({
+                    ...prev,
+                    [data.conversation_id]: [...(prev["new"] || []), aiMessage],
+                    new: undefined
+                }));
+            } else {
+                setMessages(prev => ({
+                    ...prev,
+                    [conversationKey]: [...(prev[conversationKey] || []), aiMessage]
+                }));
+            }
+        } catch (error) {
+            console.error("sendMessage error:", error);
         }
-      );
 
-      const data = await response.json();
+        setInput("");
+        setLoading(false);
+    };
 
-    setMessages(prev => ({
-  ...prev,
-  [activeProject]: [
-    ...(prev[activeProject] || []),
-    {
-      role: "assistant",
-      content: data.application_text
-    }
-  ]
-}));
+    /** Submit form data to /generate-application and show result in chat */
+    const generateApplication = async () => {
+        setLoading(true);
+        try {
+            const response = await fetch(`${API_BASE}/generate-application`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`
+                },
+                body: JSON.stringify(formData)
+            });
 
-      setShowForm(false);
+            const data = await response.json();
+            const conversationKey = activeConversationId || "new";
 
-    } catch (error) {
-      console.error("Error:", error);
-    }
+            setMessages(prev => ({
+                ...prev,
+                [conversationKey]: [
+                    ...(prev[conversationKey] || []),
+                    { role: "assistant", content: data.application_text }
+                ]
+            }));
+            setShowForm(false);
+        } catch (error) {
+            console.error("generateApplication error:", error);
+        }
+        setLoading(false);
+    };
 
-    setLoading(false);
-  };
-
-  return (
-    <div className="app" style={{ display: "flex" }}>
-
-      <Sidebar
-        projects={projects}
-        setProjects={setProjects}
-        activeProject={activeProject}
-        setActiveProject={setActiveProject}
-        renameProjectMessages={renameProjectMessages}
-       />
-
-      <ChatPanel
-        activeProject={activeProject}
-        input={input}
-        setInput={setInput}
-        messages={messages[activeProject] || []}
-        loading={loading}
-        sendMessage={sendMessage}
-        messagesEndRef={messagesEndRef}
-        setShowForm={setShowForm}   // 👈 viktig
-      />
-
-      <QueryPanel
-        show={showForm}
-        setShow={setShowForm}
-        formData={formData}
-        setFormData={setFormData}
-        generateApplication={generateApplication}
-      />
-
-    </div>
-  );
+    return (
+        <div className="app" style={{ display: "flex" }}>
+            <Sidebar
+                token={token}
+                user={user}
+                onLogout={logout}
+                activeConversationId={activeConversationId}
+                setActiveConversationId={setActiveConversationId}
+                setMessages={setMessages}
+                activeProjectId={activeProjectId}
+                setActiveProjectId={setActiveProjectId}
+            />
+            <ChatPanel
+                activeProject={activeConversationId || "new"}
+                input={input}
+                setInput={setInput}
+                messages={messages[activeConversationId || "new"] || []}
+                loading={loading}
+                sendMessage={sendMessage}
+                messagesEndRef={messagesEndRef}
+                setShowForm={setShowForm}
+            />
+            <QueryPanel
+                show={showForm}
+                setShow={setShowForm}
+                formData={formData}
+                setFormData={setFormData}
+                generateApplication={generateApplication}
+            />
+        </div>
+    );
 }
 
 export default App;
