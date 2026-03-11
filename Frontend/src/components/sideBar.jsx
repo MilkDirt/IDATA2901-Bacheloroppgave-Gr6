@@ -1,6 +1,4 @@
 /**
- * sideBar.jsx
- *
  * Sidebar component that displays the user's projects and conversations.
  * - Projects group conversations together
  * - Conversations can also exist without a project
@@ -38,9 +36,6 @@ export default function Sidebar({
         }
     }, [activeConversationId, token]);
 
-    /**
-     * Fetch all conversations that don't belong to a project.
-     */
     const fetchConversations = async () => {
         try {
             const response = await fetch(`${API_BASE}/conversations/`, {
@@ -49,16 +44,12 @@ export default function Sidebar({
             if (!response.ok) return;
             const data = await response.json();
             const all = Array.isArray(data) ? data : [];
-            // Only show conversations without a project here
             setConversations(all.filter(c => !c.project_id));
         } catch (error) {
             console.error("Failed to fetch conversations:", error);
         }
     };
 
-    /**
-     * Fetch all projects for the logged in user.
-     */
     const fetchProjects = async () => {
         try {
             const response = await fetch(`${API_BASE}/projects/`, {
@@ -72,9 +63,6 @@ export default function Sidebar({
         }
     };
 
-    /**
-     * Fetch conversations for a specific project.
-     */
     const fetchProjectConversations = async (projectId) => {
         try {
             const response = await fetch(
@@ -92,20 +80,12 @@ export default function Sidebar({
         }
     };
 
-    /**
-     * Toggle a project open or closed in the sidebar.
-     */
     const toggleProject = (projectId) => {
         const isExpanded = expandedProjects[projectId];
         setExpandedProjects(prev => ({ ...prev, [projectId]: !isExpanded }));
-        if (!isExpanded) {
-            fetchProjectConversations(projectId);
-        }
+        if (!isExpanded) fetchProjectConversations(projectId);
     };
 
-    /**
-     * Create a new project.
-     */
     const createProject = async () => {
         if (!newProjectName.trim()) return;
         try {
@@ -127,9 +107,6 @@ export default function Sidebar({
         }
     };
 
-    /**
-     * Delete a project. Conversations become project-less.
-     */
     const deleteProject = async (projectId, e) => {
         e.stopPropagation();
         if (!window.confirm("Vil du slette dette prosjektet? Samtalene beholdes.")) return;
@@ -147,9 +124,6 @@ export default function Sidebar({
         }
     };
 
-    /**
-     * Load a conversation's messages when clicked.
-     */
     const loadConversation = async (conversationId) => {
         try {
             const response = await fetch(
@@ -169,9 +143,6 @@ export default function Sidebar({
         }
     };
 
-    /**
-     * Delete a conversation.
-     */
     const deleteConversation = async (conversationId, e) => {
         e.stopPropagation();
         if (!window.confirm("Er du sikker på at du vil slette denne samtalen?")) return;
@@ -200,9 +171,6 @@ export default function Sidebar({
         }
     };
 
-    /**
-     * Start a new conversation, optionally inside a project.
-     */
     const handleNewChat = (projectId = null) => {
         setActiveConversationId(null);
         setActiveProjectId(projectId);
@@ -228,9 +196,10 @@ export default function Sidebar({
                 </button>
             </div>
 
+            {/* Projects + conversations */}
             <div className="projects-section">
 
-                {/* Projects */}
+                {/* Projects header */}
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
                     <h3 style={{ margin: 0 }}>Prosjekter</h3>
                     <button
@@ -246,7 +215,7 @@ export default function Sidebar({
 
                 {/* New project input */}
                 {showNewProjectInput && (
-                    <div style={{ display: "flex", gap: "6px", marginBottom: "10px" }}>
+                    <div style={{ display: "flex", gap: "6px", marginBottom: "10px", minWidth: 0 }}>
                         <input
                             value={newProjectName}
                             onChange={e => setNewProjectName(e.target.value)}
@@ -254,7 +223,9 @@ export default function Sidebar({
                             placeholder="Prosjektnavn..."
                             autoFocus
                             style={{
-                                flex: 1, background: "rgba(255,255,255,0.06)",
+                                flex: 1,
+                                minWidth: 0,
+                                background: "rgba(255,255,255,0.06)",
                                 border: "1px solid rgba(255,255,255,0.12)",
                                 borderRadius: "6px", padding: "6px 10px",
                                 color: "#e5e7eb", fontSize: "12px",
@@ -268,6 +239,7 @@ export default function Sidebar({
                                 borderRadius: "6px", padding: "6px 10px",
                                 color: "#fff", cursor: "pointer",
                                 fontSize: "12px", fontWeight: "600",
+                                flexShrink: 0,
                             }}
                         >OK</button>
                     </div>
@@ -282,7 +254,6 @@ export default function Sidebar({
 
                 {projects.map(project => (
                     <div key={project.id} style={{ marginBottom: "4px" }}>
-                        {/* Project header */}
                         <div
                             className="project-item"
                             onClick={() => toggleProject(project.id)}
@@ -291,7 +262,7 @@ export default function Sidebar({
                             <span style={{ marginRight: "6px", fontSize: "11px" }}>
                                 {expandedProjects[project.id] ? "▼" : "▶"}
                             </span>
-                            <span className="project-name">📁 {project.name}</span>
+                            <span className="project-name"> {project.name}</span>
                             <button
                                 className="delete-conversation-btn"
                                 onClick={(e) => deleteProject(project.id, e)}
@@ -299,7 +270,6 @@ export default function Sidebar({
                             >✕</button>
                         </div>
 
-                        {/* Project conversations */}
                         {expandedProjects[project.id] && (
                             <div style={{ marginLeft: "16px" }}>
                                 <button
@@ -341,15 +311,13 @@ export default function Sidebar({
                 ))}
 
                 {/* Divider */}
-                <div style={{ borderTop: "1px solid #333", margin: "12px 0" }} />
+                <div style={{ borderTop: "1px solid #2a2a2a", margin: "12px 0" }} />
 
                 {/* Conversations without project */}
                 <h3>Samtaler</h3>
                 <ul className="projects-list">
                     {conversations.length === 0 && (
-                        <li className="empty-state">
-                            Ingen samtaler ennå
-                        </li>
+                        <li className="empty-state">Ingen samtaler ennå</li>
                     )}
                     {conversations.map((conv) => (
                         <li
@@ -368,13 +336,9 @@ export default function Sidebar({
                 </ul>
             </div>
 
-            {/* User info and logout */}
-            <div style={{
-                padding: "16px 20px",
-                borderTop: "1px solid #333",
-                marginTop: "auto",
-            }}>
-                <div style={{ fontSize: "13px", color: "#94a3b8", marginBottom: "8px" }}>
+            {/* User info and logout — hidden when collapsed */}
+            <div className="sidebar-user">
+                <div style={{ fontSize: "13px", color: "#94a3b8", marginBottom: "4px" }}>
                     Innlogget som
                 </div>
                 <div style={{ fontSize: "14px", color: "#f1f5f9", marginBottom: "12px", fontWeight: "500" }}>
