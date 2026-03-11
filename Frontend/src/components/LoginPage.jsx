@@ -25,10 +25,6 @@ export default function LoginPage({ onLogin, onRegister, authError, authLoading 
     };
 
     const validatePassword = (password) => {
-        if (password.length < 8)
-            return "Passordet må være minst 8 tegn";
-        if (!/[A-Z]/.test(password))
-            return "Passordet må inneholde minst én stor bokstav";
         if (!/\d/.test(password))
             return "Passordet må inneholde minst ett tall";
         return null;
@@ -85,21 +81,6 @@ export default function LoginPage({ onLogin, onRegister, authError, authLoading 
         setConfirmPassword("");
         setValidationError("");
     };
-
-    // Password strength indicator
-    const getPasswordStrength = () => {
-        if (!password) return null;
-        const errors = [];
-        if (password.length < 8) errors.push("minst 8 tegn");
-        if (!/[A-Z]/.test(password)) errors.push("stor bokstav");
-        if (!/\d/.test(password)) errors.push("tall");
-
-        if (errors.length === 0) return { label: "Sterkt", color: "#22c55e" };
-        if (errors.length === 1) return { label: "Middels", color: "#F47920" };
-        return { label: "Svakt", color: "#ef4444" };
-    };
-
-    const strength = isRegistering ? getPasswordStrength() : null;
 
     return (
         <div className="auth-wrapper">
@@ -170,17 +151,7 @@ export default function LoginPage({ onLogin, onRegister, authError, authLoading 
                         onChange={(e) => setPassword(e.target.value)}
                         onKeyDown={handleKeyDown}
                     />
-                    {/* Password strength indicator */}
-                    {strength && (
-                        <div style={{
-                            marginTop: "6px",
-                            fontSize: "11px",
-                            color: strength.color,
-                            fontWeight: "500"
-                        }}>
-                            Styrke: {strength.label}
-                        </div>
-                    )}
+
                 </div>
 
                 {/* Bekreft passord — vises kun ved registrering */}

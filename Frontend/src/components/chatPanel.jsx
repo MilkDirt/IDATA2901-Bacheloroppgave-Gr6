@@ -1,6 +1,6 @@
-
 import React, { useRef, useEffect } from "react";
 import sendIcon from "../assets/button.png";
+import soknadIcon from "../assets/soknad-icon.png";
 import "../Styles/chat.css";
 
 export default function ChatPanel({ input, setInput, messages, loading, sendMessage, messagesEndRef, setShowForm }) {
@@ -13,10 +13,8 @@ export default function ChatPanel({ input, setInput, messages, loading, sendMess
         el.style.height = `${el.scrollHeight}px`;
     };
 
-    // Set initial height on mount
     useEffect(resizeTextarea, []);
 
-    // Scroll to latest message
     useEffect(() => {
         messagesEndRef?.current?.scrollIntoView({ behavior: "smooth" });
     }, [messages, loading]);
@@ -58,29 +56,46 @@ export default function ChatPanel({ input, setInput, messages, loading, sendMess
 
                     <div ref={messagesEndRef} />
                 </div>
-                <button type="button" className="form-btn" onClick={() => setShowForm(true)}>+ Søknad</button>
 
-                <form className="input-container" onSubmit={(e) => { e.preventDefault(); handleSend(); }}>
-                    <div className="input-wrapper">
-                        <textarea
-                            ref={textareaRef}
-                            className="chat-input"
-                            placeholder="Ask something..."
-                            value={input}
-                            onChange={(e) => setInput(e.target.value)}
-                            onInput={resizeTextarea}
-                            onKeyDown={(e) => {
-                                if (e.key === "Enter" && !e.shiftKey) {
-                                    e.preventDefault();
-                                    handleSend();
-                                }
-                            }}
-                        />
-                        <button type="submit" className="send-btn" disabled={loading || !input.trim()}>
-                            <img src={sendIcon} alt="Send" className="send-icon" />
-                        </button>
-                    </div>
-                </form>
+                {/* Input row with søknad icon on the left */}
+                <div className="input-row">
+
+                    {/* Søknad icon — toggles the panel open/closed */}
+                    <button
+                        type="button"
+                        className="soknad-icon-btn"
+                        onClick={() => setShowForm(prev => !prev)}
+                        title="Åpne/lukk søknadsskjema"
+                    >
+                        <img src={soknadIcon} alt="Søknad" className="soknad-icon" />
+                    </button>
+
+                    <form
+                        className="input-container"
+                        onSubmit={(e) => { e.preventDefault(); handleSend(); }}
+                    >
+                        <div className="input-wrapper">
+                            <textarea
+                                ref={textareaRef}
+                                className="chat-input"
+                                placeholder="Still et spørsmål..."
+                                value={input}
+                                onChange={(e) => setInput(e.target.value)}
+                                onInput={resizeTextarea}
+                                onKeyDown={(e) => {
+                                    if (e.key === "Enter" && !e.shiftKey) {
+                                        e.preventDefault();
+                                        handleSend();
+                                    }
+                                }}
+                            />
+                            <button type="submit" className="send-btn" disabled={loading || !input.trim()}>
+                                <img src={sendIcon} alt="Send" className="send-icon" />
+                            </button>
+                        </div>
+                    </form>
+
+                </div>
 
             </div>
         </div>
