@@ -24,7 +24,7 @@ from src.api.conversations import router as conversations_router
 from src.api.conversations import get_or_create_conversation, save_message
 from src.api.projects import router as projects_router
 
-# Initialize FastAPI application FIRST
+# Initialize FastAPI application
 app = FastAPI(title="Bachelor RAG API")
 
 # Register auth routes (/auth/register, /auth/login)
@@ -70,9 +70,6 @@ class AskRequest(BaseModel):
 def health():
     """
     Health check endpoint.
-
-    Returns:
-        dict: Simple status response used for monitoring.
     """
     return {"status": "ok"}
 
@@ -88,15 +85,6 @@ def ask(
 
     Asks the RAG system a question, saves both the question
     and answer to the database, and returns the answer.
-
-    Args:
-        req (AskRequest): Contains the question, optional conversation_id
-                          and optional project_id.
-        current_user (User): The authenticated user.
-        db (Session): Database session.
-
-    Returns:
-        dict: Answer, sources, conversation_id and metadata.
     """
     # Get or create a conversation for this chat session
     conversation = get_or_create_conversation(

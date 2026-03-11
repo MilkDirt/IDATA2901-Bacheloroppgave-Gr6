@@ -3,10 +3,6 @@ Shared FastAPI dependencies for the RAG API.
 
 This module provides reusable dependency functions that can be
 injected into any FastAPI endpoint using FastAPI's Depends() system.
-
-Currently provides:
-- get_current_user: Extracts and validates the JWT token from the
-  request header and returns the authenticated user from the database.
 """
 
 from fastapi import Depends, HTTPException, Security, status
@@ -35,17 +31,6 @@ def get_current_user(
     - Have no Authorization header
     - Have an invalid or expired token
     - Reference a user that no longer exists in the database
-
-    Args:
-        credentials: HTTP Bearer credentials from the Authorization header.
-        db (Session): Database session injected by FastAPI.
-
-    Returns:
-        User: The authenticated user object from the database.
-
-    Raises:
-        HTTPException 401: If the token is missing, invalid, or expired.
-        HTTPException 404: If the user in the token no longer exists.
     """
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
