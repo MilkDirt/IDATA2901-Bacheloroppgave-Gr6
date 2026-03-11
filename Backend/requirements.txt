@@ -6,3 +6,7 @@ pypdf
 faiss-cpu
 numpy
 openai
+sqlalchemy
+passlib[bcrypt]
+python-jose[cryptography]
+bcrypt==4.0.1
