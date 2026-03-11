@@ -14,6 +14,8 @@ import LoginPage from "./components/LoginPage";
 import { useAuth } from "./hooks/useAuth";
 import "./Styles/global.css";
 
+const API_BASE = "http://127.0.0.1:8000";
+
 function App() {
     const { token, user, authError, authLoading, login, register, logout, isLoggedIn } = useAuth();
 
@@ -24,21 +26,14 @@ function App() {
     const [activeProjectId, setActiveProjectId] = useState(null);
     const [showForm, setShowForm] = useState(false);
     const [formData, setFormData] = useState({
-        adresse: "",
-        gnr: "",
-        bnr: "",
-        kommune: "",
-        tiltakstype: "",
-        bra: "",
-        bya: "",
-        hoyde: "",
+        adresse: "", gnr: "", bnr: "", kommune: "",
+        tiltakstype: "", bra: "", bya: "", hoyde: "",
         nabovarsel: false
     });
 
     const messagesEndRef = useRef(null);
 
-    // ── Auth gate ─────────────────────────────────────────
-    // If user is not logged in, show the login page instead
+    /** Show login/register page if not authenticated */
     if (!isLoggedIn) {
         return (
             <LoginPage
@@ -50,22 +45,20 @@ function App() {
         );
     }
 
-    // ── Send message
+    /** Send user message to /ask and append the AI response */
     const sendMessage = async () => {
         if (!input.trim()) return;
 
-        const userMessage = { role: "user", content: input };
         const conversationKey = activeConversationId || "new";
 
         setMessages(prev => ({
             ...prev,
-            [conversationKey]: [...(prev[conversationKey] || []), userMessage]
+            [conversationKey]: [...(prev[conversationKey] || []), { role: "user", content: input }]
         }));
-
         setLoading(true);
 
         try {
-            const response = await fetch("http://127.0.0.1:8000/ask", {
+            const response = await fetch(`${API_BASE}/ask`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -79,46 +72,35 @@ function App() {
             });
 
             const data = await response.json();
+            const aiMessage = { role: "assistant", content: data.answer, sources: data.sources || [] };
 
-            // update the active conversation ID in new conversation
             if (!activeConversationId && data.conversation_id) {
+                /** First message — move messages from "new" key to real conversation ID */
                 setActiveConversationId(data.conversation_id);
                 setMessages(prev => ({
                     ...prev,
-                    [data.conversation_id]: [...(prev["new"] || []), {
-                        role: "assistant",
-                        content: data.answer,
-                        sources: data.sources || []
-                    }],
+                    [data.conversation_id]: [...(prev["new"] || []), aiMessage],
                     new: undefined
                 }));
             } else {
                 setMessages(prev => ({
                     ...prev,
-                    [conversationKey]: [
-                        ...(prev[conversationKey] || []),
-                        {
-                            role: "assistant",
-                            content: data.answer,
-                            sources: data.sources || []
-                        }
-                    ]
+                    [conversationKey]: [...(prev[conversationKey] || []), aiMessage]
                 }));
             }
-
         } catch (error) {
-            console.error("Error:", error);
+            console.error("sendMessage error:", error);
         }
 
         setInput("");
         setLoading(false);
     };
 
-    // ── Generate application
+    /** Submit form data to /generate-application and show result in chat */
     const generateApplication = async () => {
         setLoading(true);
         try {
-            const response = await fetch("http://127.0.0.1:8000/generate-application", {
+            const response = await fetch(`${API_BASE}/generate-application`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -137,10 +119,9 @@ function App() {
                     { role: "assistant", content: data.application_text }
                 ]
             }));
-
             setShowForm(false);
         } catch (error) {
-            console.error("Error:", error);
+            console.error("generateApplication error:", error);
         }
         setLoading(false);
     };
@@ -157,7 +138,6 @@ function App() {
                 activeProjectId={activeProjectId}
                 setActiveProjectId={setActiveProjectId}
             />
-
             <ChatPanel
                 activeProject={activeConversationId || "new"}
                 input={input}
@@ -168,7 +148,6 @@ function App() {
                 messagesEndRef={messagesEndRef}
                 setShowForm={setShowForm}
             />
-
             <QueryPanel
                 show={showForm}
                 setShow={setShowForm}
