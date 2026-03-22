@@ -29,6 +29,9 @@ vectorstore/
 chroma_db/
 faiss_index/
 
+# database
+*.db
+
 # System Files
 .DS_Store
 Thumbs.db
