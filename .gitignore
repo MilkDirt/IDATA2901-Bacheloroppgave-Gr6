@@ -28,6 +28,7 @@ data/raw/
 vectorstore/
 chroma_db/
 faiss_index/
+*.db
 
 # System Files
 .DS_Store
