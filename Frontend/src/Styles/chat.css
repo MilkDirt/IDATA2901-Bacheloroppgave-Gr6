@@ -1,23 +1,7 @@
 /* ─── Layout ─────────────────────────────────────────────── */
 
-.main--empty {
-    justify-content: center;
-}
-
 .main--empty .chat-container {
     display: none;
-}
-
-.main--empty .chat-col {
-    justify-content: center;
-}
-
-.main--active {
-    justify-content: space-between;
-}
-
-.main--active .input-container {
-    margin-top: auto;
 }
 
 .chat-col {
@@ -26,6 +10,7 @@
     height: 100%;
     display: flex;
     flex-direction: column;
+    justify-content: flex-end;
 }
 
 /* ─── Messages ───────────────────────────────────────────── */
@@ -33,6 +18,7 @@
 .chat-container {
     flex: 1;
     padding: 16px 0;
+    overflow-y: auto;
 }
 
 .message {
@@ -72,6 +58,75 @@
     border: 1px solid rgba(255, 255, 255, 0.12);
 }
 
+/* ─── Markdown styling ───────────────────────────────── */
+.message.assistant .message-content *  {
+    margin: 0;
+    padding: 0;
+}
+
+.message.assistant .message-content p {
+    margin-bottom: 6px;
+}
+
+.message.assistant .message-content h1,
+.message.assistant .message-content h2,
+.message.assistant .message-content h3 {
+    margin: 10px 0 4px 0;
+    color: rgba(255,255,255,0.95);
+}
+
+.message.assistant .message-content ul,
+.message.assistant .message-content ol {
+    padding-left: 20px;
+    margin-bottom: 6px;
+}
+
+.message.assistant .message-content li {
+    margin-bottom: 2px;
+    line-height: 1.5;
+}
+
+.message.assistant .message-content li p {
+    margin: 0;
+    display: inline;
+}
+
+.message.assistant .message-content strong {
+    color: rgba(255,255,255,0.95);
+}
+
+.message.assistant .message-content code {
+    background: rgba(255,255,255,0.1);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 13px;
+}
+
+/* ─── Tables ─────────────────────────────────────────── */
+.message.assistant .message-content table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 6px 0;
+    font-size: 13px;
+}
+
+.message.assistant .message-content th {
+    background: rgba(255,255,255,0.1);
+    color: rgba(255,255,255,0.95);
+    padding: 6px 12px;
+    text-align: left;
+    border-bottom: 1px solid rgba(255,255,255,0.15);
+}
+
+.message.assistant .message-content td {
+    padding: 5px 12px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    color: rgba(255,255,255,0.85);
+}
+
+.message.assistant .message-content tr:hover td {
+    background: rgba(255,255,255,0.04);
+}
 /* ─── Sources ────────────────────────────────────────────── */
 
 .sources {
@@ -182,7 +237,19 @@
 }
 
 .soknad-icon {
-    width: 52px;
-    height: 52px;
+    width: 36px;
+    height: 36px;
     display: block;
+}
+
+/* ─── Multiconsult logo ──────────────────────────────── */
+.multiconsult-logo {
+    position: absolute;
+    top: 20px;
+    right: 24px;
+    height: 32px;
+    width: auto;
+    opacity: 0.9;
+    pointer-events: none;
+    user-select: none;
 }

@@ -1,7 +1,10 @@
 import React, { useRef, useEffect } from "react";
 import sendIcon from "../assets/button.png";
 import soknadIcon from "../assets/soknad-icon.png";
+import multiconsultLogo from "../assets/multiconsult-logo.png";
 import "../Styles/chat.css";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 export default function ChatPanel({ input, setInput, messages, loading, sendMessage, messagesEndRef, setShowForm }) {
     const textareaRef = useRef(null);
@@ -28,12 +31,36 @@ export default function ChatPanel({ input, setInput, messages, loading, sendMess
 
     return (
         <div className={`main ${messages.length === 0 ? "main--empty" : "main--active"}`}>
+            <img src={multiconsultLogo} alt="Multiconsult" className="multiconsult-logo" />
             <div className="chat-col">
 
                 <div className="chat-container">
                     {messages.map((msg, i) => (
                         <div key={i} className={`message ${msg.role}`}>
-                            <div className="message-content">{msg.content}</div>
+                            <div className="message-content">
+                                {msg.role === "assistant"
+                                    ?<ReactMarkdown
+                                        remarkPlugins={[remarkGfm]}
+                                        components={{
+                                            // Remove extra <p> wrapping inside list items
+                                            li: ({children}) => <li>{children}</li>,
+                                            p: ({children, node}) => {
+                                                // If <p> is inside a list item render as span not block
+                                                const parent = node?.position;
+                                                return <p style={{margin: "0 0 4px 0"}}>{children}</p>;
+                                            },
+                                            ul: ({children}) => <ul style={{paddingLeft: "20px", margin: "4px 0"}}>{children}</ul>,
+                                            ol: ({children}) => <ol style={{paddingLeft: "20px", margin: "4px 0"}}>{children}</ol>,
+                                            h1: ({children}) => <h1 style={{margin: "8px 0 2px 0"}}>{children}</h1>,
+                                            h2: ({children}) => <h2 style={{margin: "8px 0 2px 0"}}>{children}</h2>,
+                                            h3: ({children}) => <h3 style={{margin: "6px 0 2px 0"}}>{children}</h3>,
+                                        }}
+                                    >
+                                        {msg.content}
+                                    </ReactMarkdown>
+                                    : msg.content
+                                }
+                            </div>
 
                             {msg.role === "assistant" && msg.sources?.length > 0 && (
                                 <div className="sources">
