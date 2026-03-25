@@ -19,8 +19,24 @@
 .panel-header {
   display: flex;
   justify-content: space-between;
+  align-items: center;
   padding: 20px;
   border-bottom: 1px solid #eee;
+  color: #fff;
+}
+
+.panel-header h2 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.panel-header button {
+  background: none;
+  border: none;
+  color: #fff;
+  cursor: pointer;
+  font-size: 1rem;
 }
 
 .panel-content {
@@ -32,8 +48,41 @@
 }
 
 .panel-content input,
-.panel-content select {
+.panel-content select,
+.panel-content textarea {
   padding: 8px;
+  width: 100%;
+  box-sizing: border-box;
+  background: #272d34;
+  border: 1px solid #3a4148;
+  color: #fff;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  font-family: inherit;
+}
+
+.panel-content textarea {
+  resize: vertical;
+  min-height: 72px;
+  line-height: 1.5;
+}
+
+.panel-content input::placeholder,
+.panel-content textarea::placeholder {
+  color: #7a8490;
+}
+
+.field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.field-group label {
+  font-size: 0.78rem;
+  color: #9aa3ad;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .generate-btn {
@@ -43,10 +92,17 @@
   color: white;
   border: none;
   cursor: pointer;
+  border-radius: 4px;
+  font-size: 0.9rem;
+}
+
+.generate-btn:hover {
+  background: #111;
 }
 
 .checkbox {
   display: flex;
   gap: 8px;
   align-items: center;
+  color: #fff;
 }
