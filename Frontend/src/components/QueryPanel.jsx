@@ -137,7 +137,7 @@ export default function QueryPanel({
           />
         </div>
 
-        {/* 7. Antall medlemmer */}
+        {/* Antall medlemmer */}
         <div className="field-group">
           <label>7. Idrettslag og medlemstall</label>
           <input
@@ -155,22 +155,23 @@ export default function QueryPanel({
           />
         </div>
 
-        {/* 7. Antall medlemmer */}
+       {/* Drift */}
         <div className="field-group">
-          <label>7. Idrettslag og medlemstall</label>
+          <label>8. Driftsansvarlig</label>
           <input
-            name="idrettslag"
-            placeholder="Navn på idrettslag/-lag som skal bruke anlegget"
-            value={formData.idrettslag || ""}
+            name="driftsansvarlig"
+            placeholder="Hvem skal drifte anlegget? (organisasjon, kommune, lag...)"
+            value={formData.driftsansvarlig || ""}
             onChange={handleChange}
           />
-          <input
-            name="antallMedlemmer"
-            placeholder="Totalt antall medlemmer"
-            type="number"
-            value={formData.antallMedlemmer || ""}
-            onChange={handleChange}
-          />
+          <select name="driftsmodell" value={formData.driftsmodell || ""} onChange={handleChange}>
+            <option value="">Velg driftsmodell</option>
+            <option value="kommunal">Kommunal drift</option>
+            <option value="idrettslag">Idrettslag</option>
+            <option value="stiftelse">Stiftelse/AS</option>
+            <option value="interkommunal">Interkommunalt samarbeid</option>
+            <option value="annet">Annet</option>
+          </select>
         </div>
 
         <button className="generate-btn" onClick={generateApplication}>
