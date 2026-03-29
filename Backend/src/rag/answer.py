@@ -153,7 +153,60 @@ SPØRSMÅL:
             "answer": resp.choices[0].message.content,
             "sources": sources
         }
+    
+# answer for querys to acsess search outside given sources
+def answer_with_web(self, question: str) -> Dict[str, Any]:
+    """
+    Same as answer() but allows the model to search the web.
+    Use only for Behovsvurdering and other document generation queries.
+    """
+    qvec = self._embed_query(question)
+    hits = self.vectorstore.search(qvec, settings.top_k)
 
+    context_blocks = []
+    sources = []
+    for h in hits:
+        context_blocks.append(
+            f"[{h['source_file']} | side {h['page']}]\n{h['text']}"
+        )
+        sources.append({
+            "source_file": h["source_file"],
+            "page": h["page"],
+            "score": h["score"]
+        })
+
+    context = "\n\n---\n\n".join(context_blocks)
+
+    system_prompt = (
+        "Du er en faglig assistent som skriver behovsvurderinger for idrettsanlegg. "
+        "Bruk KONTEKSTEN som primærkilde. "
+        "Du kan også søke på nettet for å supplere med relevant informasjon som innbyggertall, kommunale planer og lignende. "
+        "Oppgi kilder for all informasjon hentet fra nettet. "
+        "Svar alltid på norsk bokmål med en formell og saklig tone. "
+        "Ikke bruk JSON, markdown, kodeblokker eller spesialtegn som ** eller ##."
+    )
+
+    user_prompt = f"""KONTEXT:
+{context}
+
+SPØRSMÅL:
+{question}
+"""
+
+    resp = self.client.chat.completions.create(
+        model=settings.chat_model,
+        messages=[
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_prompt},
+        ],
+        temperature=0.2,
+    )
+
+    return {
+        "question": question,
+        "answer": resp.choices[0].message.content,
+        "sources": sources
+    }
 
 def get_answerer() -> RAGAnswerer:
     """

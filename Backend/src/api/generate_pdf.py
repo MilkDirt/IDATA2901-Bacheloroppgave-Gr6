@@ -82,7 +82,7 @@ Informasjon om anlegget:
 """
 
     answerer = get_answerer()
-    result = answerer.answer(question)
+    result = answerer.answer_with_web(question)  # instead of answerer.answer(question)
     return result["answer"]
 
 
