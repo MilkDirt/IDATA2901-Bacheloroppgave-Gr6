@@ -26,9 +26,21 @@ function App() {
     const [activeProjectId, setActiveProjectId] = useState(null);
     const [showForm, setShowForm] = useState(false);
     const [formData, setFormData] = useState({
-        adresse: "", gnr: "", bnr: "", kommune: "",
-        tiltakstype: "", bra: "", bya: "", hoyde: "",
-        nabovarsel: false
+        typeAnlegg: "",
+        typeAnleggAnnet: "",
+        behoveBeskrivelse: "",
+        antallBrukere: "",
+        kommunalePlanerBeskrivelse: "",
+        avstandAndreAnlegg: "",
+        avstandKm: "",
+        kommune: "",
+        innbyggertall: "",
+        befolkningINeromraade: "",
+        brukerBeskrivelse: "",
+        idrettslag: "",
+        antallMedlemmer: "",
+        driftsansvarlig: "",
+        driftsmodell: "",
     });
 
     const messagesEndRef = useRef(null);
@@ -98,33 +110,36 @@ function App() {
 
     /** Submit form data to /generate-application and show result in chat */
     const generateApplication = async () => {
-        setLoading(true);
-        try {
-            const response = await fetch(`${API_BASE}/generate-application`, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${token}`
-                },
-                body: JSON.stringify(formData)
-            });
+    setLoading(true);
+    try {
+        const response = await fetch(`${API_BASE}/api/generate-pdf`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${token}`
+            },
+            body: JSON.stringify(formData)
+        });
 
-            const data = await response.json();
-            const conversationKey = activeConversationId || "new";
-
-            setMessages(prev => ({
-                ...prev,
-                [conversationKey]: [
-                    ...(prev[conversationKey] || []),
-                    { role: "assistant", content: data.application_text }
-                ]
-            }));
-            setShowForm(false);
-        } catch (error) {
-            console.error("generateApplication error:", error);
+        if (!response.ok) {
+            const err = await response.json().catch(() => ({}));
+            console.error("PDF generation failed:", err.detail);
+            return;
         }
-        setLoading(false);
-    };
+
+        const blob = await response.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `behovsvurdering_${formData.kommune || "dokument"}.pdf`;
+        a.click();
+        URL.revokeObjectURL(url);
+        setShowForm(false);
+    } catch (error) {
+        console.error("generateApplication error:", error);
+    }
+    setLoading(false);
+};
 
     return (
         <div className="app" style={{ display: "flex" }}>
