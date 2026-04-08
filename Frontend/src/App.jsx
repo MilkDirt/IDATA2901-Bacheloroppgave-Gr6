@@ -42,6 +42,32 @@ function App() {
         driftsansvarlig: "",
         driftsmodell: "",
     });
+    const [showKostnadsoverlag, setShowKostnadsoverlag] = useState(false);
+    const [kostnadsoverlagData, setKostnadsoverlagData] = useState({
+        prosjektNavn: "", 
+        kommune: "", 
+        typeAnlegg: "", 
+        anleggStorrelse: "",
+        grunnarb: "", 
+        dreneringKr: "", 
+        aktivitetsflateKr: "",
+        gjerdeUtstyrKr: "", 
+        garderodeKr: "", 
+        lysanleggKr: "",
+        andreKostnaderTilskudd: "",
+        tribuneKr: "", 
+        parkeringKr: "", 
+        avgifterKr: "", 
+        andreKostnaderIkke: "",
+        dugnadTimer: "", 
+        dugnadTimepris: "", 
+        dugnadBeskrivelse: "",
+        spillemidlerKr: "", 
+        kommunaltTilskuddKr: "", 
+        egneMiddlerKr: "",
+        andreTilskuddKr: "", 
+        lanKr: "",
+    });
 
     const messagesEndRef = useRef(null);
 
@@ -141,6 +167,39 @@ function App() {
     setLoading(false);
 };
 
+/** Generate function for kostnadsoverslag */
+    const generateKostnadsoverlag = async () => {
+    setLoading(true);
+    try {
+        const response = await fetch(`${API_BASE}/api/generate-kostnadsoverlag`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${token}`
+            },
+            body: JSON.stringify(kostnadsoverlagData)
+        });
+ 
+        if (!response.ok) {
+            const err = await response.json().catch(() => ({}));
+            console.error("Kostnadsoverslag generation failed:", err.detail);
+            return;
+        }
+ 
+        const blob = await response.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `kostnadsoverslag_${kostnadsoverlagData.prosjektNavn || "prosjekt"}.pdf`;
+        a.click();
+        URL.revokeObjectURL(url);
+        setShowKostnadsoverlag(false);
+    } catch (error) {
+        console.error("generateKostnadsoverlag error:", error);
+    }
+    setLoading(false);
+};
+
     return (
         <div className="app" style={{ display: "flex" }}>
             <Sidebar
@@ -168,7 +227,10 @@ function App() {
                 setShow={setShowForm}
                 formData={formData}
                 setFormData={setFormData}
+                kostnadsoverlagData={kostnadsoverlagData}
+                setKostnadsoverlagData={setKostnadsoverlagData}
                 generateApplication={generateApplication}
+                generateKostnadsoverlag={generateKostnadsoverlag}
             />
         </div>
     );
