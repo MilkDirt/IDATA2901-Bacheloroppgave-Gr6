@@ -22,6 +22,11 @@ python -m src.ingest.build_index
 
 5. Start the API:
 uvicorn src.api.main:app --reload
+or
 py -m uvicorn src.api.main:app --reload
 
 6. Open http://127.0.0.1:8000/docs to ask questions via the API
+
+
+
+pip install reportlab
