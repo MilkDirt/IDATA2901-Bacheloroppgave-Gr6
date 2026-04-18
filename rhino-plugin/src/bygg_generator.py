@@ -18,6 +18,7 @@ class ByggGeneratorDialog(ef.Dialog):
     """Main dialog for the building generator plugin."""
 
     def __init__(self):
+        super(ByggGeneratorDialog, self).__init__()
         self.Title = "Bygg Generator"
         self.Padding = ed.Padding(10)
         self.Resizable = False
@@ -38,7 +39,7 @@ class ByggGeneratorDialog(ef.Dialog):
         self.floor_input.Width = 300
 
         self.status_label = ef.Label()
-        self.status_label.Text = "Velg bounding box, klikk Generer."
+        self.status_label.Text = "Velg skjelett i Rhino, klikk Generer."
         self.status_label.TextColor = ed.Colors.Gray
 
         generate_btn = ef.Button()
@@ -202,22 +203,34 @@ class ByggGeneratorDialog(ef.Dialog):
         self._set_status("Henter AI parametere...", ed.Colors.Orange)
         doc = Rhino.RhinoDoc.ActiveDoc
 
-        selected = rs.GetObject("Velg bounding box", rs.filter.polysurface)
-        if not selected:
-            self._set_status("Ingen boks valgt!", ed.Colors.Red)
+        # Get already selected objects in Rhino — user selects before clicking button
+        selected_ids = rs.SelectedObjects()
+        if not selected_ids:
+            # Nothing preselected — ask user to select
+            selected_ids = rs.GetObjects(
+                "Velg skjelett objekter og trykk Enter",
+                preselect=True)
+        if not selected_ids:
+            self._set_status("Ingen objekter valgt!", ed.Colors.Red)
             return
 
-        brep = rs.coercebrep(selected)
-        if not brep:
-            self._set_status("Ugyldig geometri!", ed.Colors.Red)
+        # Compute combined bounding box from all selected objects
+        combined_bbox = rg.BoundingBox.Empty
+        for obj_id in selected_ids:
+            obj = doc.Objects.Find(obj_id)
+            if obj is not None:
+                combined_bbox = rg.BoundingBox.Union(
+                    combined_bbox, obj.Geometry.GetBoundingBox(True))
+
+        if not combined_bbox.IsValid:
+            self._set_status("Feil: Kunne ikke beregne bounding box!", ed.Colors.Red)
             return
 
-        bbox = brep.GetBoundingBox(True)
-        z_min = round(bbox.Min.Z, 3)
-        z_max = round(bbox.Max.Z, 3)
+        z_min = round(combined_bbox.Min.Z, 3)
+        z_max = round(combined_bbox.Max.Z, 3)
         total_height = z_max - z_min
-        box_width = bbox.Max.X - bbox.Min.X
-        box_depth = bbox.Max.Y - bbox.Min.Y
+        box_width = combined_bbox.Max.X - combined_bbox.Min.X
+        box_depth = combined_bbox.Max.Y - combined_bbox.Min.Y
 
         z_levels = self._parse_floor_levels(
             self.floor_input.Text.strip(), z_min, z_max, total_height
@@ -228,10 +241,16 @@ class ByggGeneratorDialog(ef.Dialog):
             self.desc_input.Text, num_floors, total_height, box_width, box_depth
         )
 
-        corner_pts = self._get_sorted_ground_corners(brep, z_min, z_levels[0])
-        if not corner_pts:
-            self._set_status("Feil: Ingen grunnpunkter!", ed.Colors.Red)
-            return
+        # Build 4 corners from the bounding box
+        mn = combined_bbox.Min
+        mx = combined_bbox.Max
+        corner_pts = [
+            rg.Point3d(mn.X, mn.Y, z_levels[0]),
+            rg.Point3d(mx.X, mn.Y, z_levels[0]),
+            rg.Point3d(mx.X, mx.Y, z_levels[0]),
+            rg.Point3d(mn.X, mx.Y, z_levels[0]),
+            rg.Point3d(mn.X, mn.Y, z_levels[0]),  # closed
+        ]
 
         footprint = rg.PolylineCurve([rg.Point3d(p) for p in corner_pts])
         panel_width = max(3.0, min(box_width, box_depth) / 6)
@@ -250,5 +269,6 @@ class ByggGeneratorDialog(ef.Dialog):
         )
 
 
-dialog = ByggGeneratorDialog()
-dialog.ShowModal(Rhino.UI.RhinoEtoApp.MainWindow)
+if __name__ == "__main__":
+    dialog = ByggGeneratorDialog()
+    dialog.ShowModal(Rhino.UI.RhinoEtoApp.MainWindow)

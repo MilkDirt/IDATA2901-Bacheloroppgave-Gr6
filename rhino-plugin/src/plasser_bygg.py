@@ -16,6 +16,7 @@ class PlasserByggDialog(ef.Dialog):
     """Main dialog for placing a building onto a terrain mesh."""
 
     def __init__(self):
+        super(PlasserByggDialog, self).__init__()
         self.Title = "Plasser Bygg på Terreng"
         self.Padding = ed.Padding(10)
         self.Resizable = False
@@ -141,6 +142,24 @@ class PlasserByggDialog(ef.Dialog):
         terrain_mesh.Normals.ComputeNormals()
         terrain_mesh.UnifyNormals()
 
+        # Reapply height colors after flattening so the modified area matches the terrain palette
+        import System.Drawing as sd
+        all_z = [terrain_mesh.Vertices[vi].Z for vi in range(terrain_mesh.Vertices.Count)]
+        z_min_all = min(all_z)
+        z_max_all = max(all_z)
+        z_range = max(z_max_all - z_min_all, 0.1)
+
+        for vi in range(terrain_mesh.Vertices.Count):
+            t = (terrain_mesh.Vertices[vi].Z - z_min_all) / z_range
+            if t < 0.5:
+                tt = t / 0.5
+                r, g, b = int(tt*210), int(150+tt*85), int(60-tt*60)
+            else:
+                tt = (t - 0.5) / 0.5
+                r, g, b = int(210+tt*45), int(235-tt*200), int(tt*220)
+            terrain_mesh.VertexColors[vi] = sd.Color.FromArgb(
+                max(0, min(255, r)), max(0, min(255, g)), max(0, min(255, b)))
+
     def _move_building_to_z(self, doc, building_ids, current_z_min, target_z):
         """Translate all building objects vertically so the base aligns with target_z."""
         xform = rg.Transform.Translation(rg.Vector3d(0, 0, target_z - current_z_min))
@@ -202,5 +221,6 @@ class PlasserByggDialog(ef.Dialog):
         )
 
 
-dialog = PlasserByggDialog()
-dialog.ShowModal(Rhino.UI.RhinoEtoApp.MainWindow)
+if __name__ == "__main__":
+    dialog = PlasserByggDialog()
+    dialog.ShowModal(Rhino.UI.RhinoEtoApp.MainWindow)
