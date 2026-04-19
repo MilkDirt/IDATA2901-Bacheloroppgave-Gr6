@@ -142,23 +142,25 @@ class PlasserByggDialog(ef.Dialog):
         terrain_mesh.Normals.ComputeNormals()
         terrain_mesh.UnifyNormals()
 
-        # Reapply height colors after flattening so the modified area matches the terrain palette
-        import System.Drawing as sd
-        all_z = [terrain_mesh.Vertices[vi].Z for vi in range(terrain_mesh.Vertices.Count)]
-        z_min_all = min(all_z)
-        z_max_all = max(all_z)
-        z_range = max(z_max_all - z_min_all, 0.1)
+        # Only reapply height colors if mesh uses vertex colors (no satellite texture).
+        # If VertexColors is empty the mesh has a material texture - skip to avoid crash.
+        if terrain_mesh.VertexColors.Count > 0:
+            import System.Drawing as sd
+            all_z = [terrain_mesh.Vertices[vi].Z for vi in range(terrain_mesh.Vertices.Count)]
+            z_min_all = min(all_z)
+            z_max_all = max(all_z)
+            z_range = max(z_max_all - z_min_all, 0.1)
 
-        for vi in range(terrain_mesh.Vertices.Count):
-            t = (terrain_mesh.Vertices[vi].Z - z_min_all) / z_range
-            if t < 0.5:
-                tt = t / 0.5
-                r, g, b = int(tt*210), int(150+tt*85), int(60-tt*60)
-            else:
-                tt = (t - 0.5) / 0.5
-                r, g, b = int(210+tt*45), int(235-tt*200), int(tt*220)
-            terrain_mesh.VertexColors[vi] = sd.Color.FromArgb(
-                max(0, min(255, r)), max(0, min(255, g)), max(0, min(255, b)))
+            for vi in range(terrain_mesh.Vertices.Count):
+                t = (terrain_mesh.Vertices[vi].Z - z_min_all) / z_range
+                if t < 0.5:
+                    tt = t / 0.5
+                    r, g, b = int(tt*210), int(150+tt*85), int(60-tt*60)
+                else:
+                    tt = (t - 0.5) / 0.5
+                    r, g, b = int(210+tt*45), int(235-tt*200), int(tt*220)
+                terrain_mesh.VertexColors[vi] = sd.Color.FromArgb(
+                    max(0, min(255, r)), max(0, min(255, g)), max(0, min(255, b)))
 
     def _move_building_to_z(self, doc, building_ids, current_z_min, target_z):
         """Translate all building objects vertically so the base aligns with target_z."""
@@ -186,8 +188,17 @@ class PlasserByggDialog(ef.Dialog):
             self._set_status("Ugyldig terreng-mesh!", ed.Colors.Red)
             return
 
-        self._set_status("Velg bygget (alle flater)...", ed.Colors.Orange)
-        building_ids = rs.GetObjects("Velg alle bygningsobjekter", preselect=False)
+        # Hide terrain so it cannot be accidentally picked during building selection
+        rs.HideObject(terrain_id)
+        doc.Views.Redraw()
+
+        self._set_status("Velg bygget - terreng er midlertidig skjult...", ed.Colors.Orange)
+        building_ids = rs.GetObjects("Velg alle bygningsobjekter og trykk Enter", preselect=False)
+
+        # Always restore terrain visibility before doing anything else
+        rs.ShowObject(terrain_id)
+        doc.Views.Redraw()
+
         if not building_ids:
             self._set_status("Ingen bygning valgt!", ed.Colors.Red)
             return

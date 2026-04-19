@@ -25,9 +25,9 @@ import struct
 # Config — tweak these at the top
 # ---------------------------------------------------------------------------
 
-MESH_STEP     = 3    # Sample every Nth pixel. 1=full res (slow), 4=good balance, 8=fast preview
-SMOOTH_ITER   = 2    # Box-smooth passes on Z grid (0=none, 1=light, 2=smooth)
-SMOOTH_RADIUS = 2    # Kernel radius: 1=3x3, 2=5x5  (1 pass 3x3 = near-raw)
+MESH_STEP     = 2    # Sample every Nth pixel. 1=full res (slow), 4=good balance, 8=fast preview
+SMOOTH_ITER   = 1    # Box-smooth passes on Z grid (0=none, 1=light, 2=smooth)
+SMOOTH_RADIUS = 1    # Kernel radius: 1=3x3, 2=5x5  (1 pass 3x3 = near-raw)
 Z_SCALE       = 1.3  # Vertical exaggeration (1.0=real scale, 2.0=dramatic)
 CACHE_DIR     = os.path.join(os.path.expanduser("~"), "rhino_terrain_cache")
 
