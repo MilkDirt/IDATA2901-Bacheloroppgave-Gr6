@@ -225,7 +225,7 @@ class SatellittTeksturDialog(ef.Dialog):
             self._set_status("Kunne ikke lagre: " + str(ex), ed.Colors.Red)
             return
 
-        self._set_status("Påforer tekstur...", ed.Colors.Orange)
+        self._set_status("Påfører tekstur...", ed.Colors.Orange)
         try:
             self._apply_uv(mesh, fetch_size)
             self._apply_material(doc, obj_id, mesh, tmp)

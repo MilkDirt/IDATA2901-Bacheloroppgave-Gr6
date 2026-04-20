@@ -55,7 +55,7 @@ class PluginPanel(ef.Form):
         layout.Spacing = ed.Size(0, 6)
 
         subtitle = ef.Label()
-        subtitle.Text = "Fyll inn koordinater og folg stegene i rekkefolge."
+        subtitle.Text = "Fyll inn koordinater og følg stegene i rekkefølge."
         subtitle.TextColor = ed.Colors.DarkGray
         subtitle.Width = 290
         layout.Rows.Add(ef.TableRow(ef.TableCell(subtitle)))
@@ -75,7 +75,7 @@ class PluginPanel(ef.Form):
 
         coord_layout.Rows.Add(ef.TableRow(self._cell(self._label("Breddegrad (lat):")), self._cell(self.lat_input)))
         coord_layout.Rows.Add(ef.TableRow(self._cell(self._label("Lengdegrad (lon):")), self._cell(self.lon_input)))
-        coord_layout.Rows.Add(ef.TableRow(self._cell(self._label("Storrelse (m):")),    self._cell(self.size_input)))
+        coord_layout.Rows.Add(ef.TableRow(self._cell(self._label("Størrelse (m):")),    self._cell(self.size_input)))
         coord_box.Content = coord_layout
 
         layout.Rows.Add(ef.TableRow(ef.TableCell(coord_box)))
@@ -83,16 +83,16 @@ class PluginPanel(ef.Form):
 
         # Step 1 — Terreng (no sub-dialog, runs directly)
         layout.Rows.Add(ef.TableRow(ef.TableCell(self._heading("Steg 1 - Terreng"))))
-        self.t_status = self._status("Klar til a hente terreng.")
+        self.t_status = self._status("Klar til å hente terreng.")
         layout.Rows.Add(ef.TableRow(ef.TableCell(self.t_status)))
         layout.Rows.Add(ef.TableRow(ef.TableCell(self._button("Hent Terreng fra Kartverket", self.on_terreng))))
         layout.Rows.Add(ef.TableRow(ef.TableCell(self._spacer(4))))
 
         # Step 2 — Satellitt
         layout.Rows.Add(ef.TableRow(ef.TableCell(self._heading("Steg 2 - Satellitt"))))
-        self.s_status = self._status("Hent terreng forst.")
+        self.s_status = self._status("Hent terreng først.")
         layout.Rows.Add(ef.TableRow(ef.TableCell(self.s_status)))
-        layout.Rows.Add(ef.TableRow(ef.TableCell(self._button("Legg pa satellittbilde", self.on_satelitt))))
+        layout.Rows.Add(ef.TableRow(ef.TableCell(self._button("Legg på satellittbilde", self.on_satelitt))))
         layout.Rows.Add(ef.TableRow(ef.TableCell(self._spacer(4))))
 
         # Step 3 — Bygg
@@ -104,9 +104,9 @@ class PluginPanel(ef.Form):
 
         # Step 4 — Plasser
         layout.Rows.Add(ef.TableRow(ef.TableCell(self._heading("Steg 4 - Plassering"))))
-        self.p_status = self._status("Generer bygg og terreng forst.")
+        self.p_status = self._status("Generer bygg og terreng først.")
         layout.Rows.Add(ef.TableRow(ef.TableCell(self.p_status)))
-        layout.Rows.Add(ef.TableRow(ef.TableCell(self._button("Plasser Bygg pa Terreng", self.on_plasser))))
+        layout.Rows.Add(ef.TableRow(ef.TableCell(self._button("Plasser Bygg på Terreng", self.on_plasser))))
         layout.Rows.Add(ef.TableRow(ef.TableCell(self._spacer(4))))
 
         self.Content = layout
@@ -208,7 +208,7 @@ class PluginPanel(ef.Form):
             self._set_status(self.s_status, "Feil: Sjekk koordinater!", ed.Colors.Red)
             return
         lat, lon, size = coords
-        self._set_status(self.s_status, "Apner...", ed.Colors.Orange)
+        self._set_status(self.s_status, "Åpner...", ed.Colors.Orange)
         try:
             dlg = SatellittTeksturDialog(lat=lat, lon=lon, size=size)
             dlg.ShowModal(Rhino.UI.RhinoEtoApp.MainWindow)
@@ -218,7 +218,7 @@ class PluginPanel(ef.Form):
 
     def on_bygg(self, sender, e):
         """Open Bygg Generator dialog."""
-        self._set_status(self.b_status, "Apner...", ed.Colors.Orange)
+        self._set_status(self.b_status, "Åpner...", ed.Colors.Orange)
         try:
             dlg = ByggGeneratorDialog()
             dlg.ShowModal(Rhino.UI.RhinoEtoApp.MainWindow)
@@ -228,7 +228,7 @@ class PluginPanel(ef.Form):
 
     def on_plasser(self, sender, e):
         """Open Plasser Bygg dialog."""
-        self._set_status(self.p_status, "Apner...", ed.Colors.Orange)
+        self._set_status(self.p_status, "Åpner...", ed.Colors.Orange)
         try:
             dlg = PlasserByggDialog()
             dlg.ShowModal(Rhino.UI.RhinoEtoApp.MainWindow)
