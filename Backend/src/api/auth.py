@@ -18,9 +18,10 @@ from datetime import datetime, timedelta
 
 from src.db.database import get_db
 from src.db.models import User
+from src.config import settings
 
 # ── Security config ───────────────────────────────────────
-SECRET_KEY = "change-this-to-a-random-string-in-production"
+SECRET_KEY = settings.secret_key
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24  # 24 timer
 

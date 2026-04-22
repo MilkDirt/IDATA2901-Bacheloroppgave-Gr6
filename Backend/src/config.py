@@ -28,6 +28,8 @@ class Settings:
     ntnu_api_key: str = os.getenv("NTNU_API_KEY", "")
     ntnu_base_url: str = os.getenv("NTNU_BASE_URL", "")
 
+    secret_key: str = os.getenv("SECRET_KEY", "")
+
     chat_model: str = os.getenv("CHAT_MODEL", "gpt-oss-120b")
     embed_model: str = os.getenv("EMBED_MODEL", "Qwen3-Embedding-8B")
 
@@ -51,3 +53,5 @@ def validate_settings() -> None:
         raise ValueError("Missing NTNU_API_KEY in .env")
     if not settings.ntnu_base_url:
         raise ValueError("Missing NTNU_BASE_URL in .env")
+    if not settings.secret_key:
+        raise ValueError("Missing SECRET_KEY in .env")
