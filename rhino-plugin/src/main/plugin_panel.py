@@ -22,8 +22,8 @@ for _mod in ['terreng_generator', 'satelitt_tekstur', 'bygg_generator', 'plasser
     if _mod in sys.modules:
         del sys.modules[_mod]
 
-# Register this folder on sys.path so sibling tool modules can be imported
-_src_dir = os.path.dirname(os.path.abspath(__file__))
+# Point to src/components/ where the tool modules live
+_src_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'components')
 if _src_dir not in sys.path:
     sys.path.insert(0, _src_dir)
 
