@@ -26,7 +26,6 @@ from src.api.dependencies import get_current_user
 from src.api.conversations import router as conversations_router
 from src.api.conversations import get_or_create_conversation, save_message
 from src.api.projects import router as projects_router
-from src.api.generate_pdf import router as pdf_router
 from src.config import settings
 
 # Initialize FastAPI application
@@ -40,9 +39,6 @@ app.include_router(conversations_router)
 
 # Register project routes (/projects/)
 app.include_router(projects_router)
-
-# Create pdf files
-app.include_router(pdf_router)
 
 # Create all database tables on startup if they don't exist
 models.Base.metadata.create_all(bind=engine)
@@ -191,5 +187,20 @@ async def generate_building(req: BuildingRequest):
         temperature=0.3
     )
 
-    result = json.loads(response.choices[0].message.content)
+    try:
+        # Strip markdown code fences if the LLM wraps the JSON in ```json ... ```
+        raw = response.choices[0].message.content.strip()
+        if raw.startswith("```"):
+            raw = raw.split("```")[1]
+            if raw.startswith("json"):
+                raw = raw[4:]
+        result = json.loads(raw.strip())
+    except Exception:
+        # Fall back to safe defaults if the LLM returns invalid JSON
+        result = {
+            "window_ratio": 0.4,
+            "wall_thickness": 0.2,
+            "floor_height": req.height / max(req.floors, 2),
+            "facade_style": "modern"
+        }
     return result
