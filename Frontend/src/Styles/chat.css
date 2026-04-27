@@ -13,6 +13,11 @@
     justify-content: flex-end;
 }
 
+/* When no messages yet, center the input vertically */
+.main--empty .chat-col {
+    justify-content: center;
+}
+
 /* ─── Messages ───────────────────────────────────────────── */
 
 .chat-container {

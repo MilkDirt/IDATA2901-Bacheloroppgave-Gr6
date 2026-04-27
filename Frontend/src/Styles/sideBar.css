@@ -9,7 +9,7 @@
     flex-direction: column;
     border-right: 1px solid #2a2a2a;
     font-family: Inter, system-ui, sans-serif;
-    transition: width 0.3s ease;
+    transition: width 0.3s ease, min-width 0.3s ease;
     overflow: hidden;
 }
 
@@ -18,20 +18,27 @@
     min-width: 52px;
 }
 
+/* ─── Content sections — fade out fast, fade in after sidebar opens ── */
+.sidebar-user,
+.new-project-container,
+.projects-section {
+    opacity: 1;
+    transition: opacity 0.2s ease 0.15s;
+}
+
+.sidebar.collapsed .sidebar-user,
+.sidebar.collapsed .new-project-container,
+.sidebar.collapsed .projects-section {
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.08s ease;
+}
+
 /* ─── User info bottom ───────────────────────────────── */
 .sidebar-user {
     padding: 16px;
     border-top: 1px solid #2a2a2a;
     flex-shrink: 0;
-}
-
-.sidebar.collapsed .sidebar-user {
-    display: none;
-}
-
-.sidebar.collapsed .new-project-container,
-.sidebar.collapsed .projects-section {
-    display: none;
 }
 
 /* ─── Toggle button ──────────────────────────────────── */
