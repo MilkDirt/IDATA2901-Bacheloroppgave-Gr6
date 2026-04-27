@@ -36,6 +36,13 @@ export default function Sidebar({
         }
     }, [activeConversationId, token]);
 
+    // Re-fetch conversations for the active project when a new conversation is created
+    useEffect(() => {
+        if (token && activeProjectId && expandedProjects[activeProjectId]) {
+            fetchProjectConversations(activeProjectId);
+        }
+    }, [activeConversationId, activeProjectId]);
+
     const fetchConversations = async () => {
         try {
             const response = await fetch(`${API_BASE}/conversations/`, {
@@ -109,7 +116,7 @@ export default function Sidebar({
 
     const deleteProject = async (projectId, e) => {
         e.stopPropagation();
-        if (!window.confirm("Vil du slette dette prosjektet? Samtalene beholdes.")) return;
+
         try {
             const response = await fetch(`${API_BASE}/projects/${projectId}`, {
                 method: "DELETE",
@@ -145,7 +152,7 @@ export default function Sidebar({
 
     const deleteConversation = async (conversationId, e) => {
         e.stopPropagation();
-        if (!window.confirm("Er du sikker på at du vil slette denne samtalen?")) return;
+
         try {
             const response = await fetch(
                 `${API_BASE}/conversations/${conversationId}`,
@@ -175,6 +182,11 @@ export default function Sidebar({
         setActiveConversationId(null);
         setActiveProjectId(projectId);
         setMessages((prev) => ({ ...prev, new: [] }));
+        // Auto-expand the project so new conversation appears immediately
+        if (projectId) {
+            setExpandedProjects(prev => ({ ...prev, [projectId]: true }));
+            fetchProjectConversations(projectId);
+        }
     };
 
     return (
