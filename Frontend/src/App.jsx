@@ -138,7 +138,7 @@ function App() {
     const generateApplication = async () => {
     setLoading(true);
     try {
-        const response = await fetch(`${API_BASE}/api/generate-pdf`, {
+        const response = await fetch(`${API_BASE}/api/generate-docx`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
@@ -149,7 +149,7 @@ function App() {
 
         if (!response.ok) {
             const err = await response.json().catch(() => ({}));
-            console.error("PDF generation failed:", err.detail);
+            console.error("DOCX generation failed:", err.detail);
             return;
         }
 

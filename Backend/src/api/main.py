@@ -26,7 +26,7 @@ from src.api.dependencies import get_current_user
 from src.api.conversations import router as conversations_router
 from src.api.conversations import get_or_create_conversation, save_message
 from src.api.projects import router as projects_router
-from src.api.generate_pdf import router as pdf_router
+from src.api.generate_docx import router as docx_router
 from src.config import settings
 
 # Initialize FastAPI application
@@ -41,8 +41,8 @@ app.include_router(conversations_router)
 # Register project routes (/projects/)
 app.include_router(projects_router)
 
-# Create pdf files
-app.include_router(pdf_router)
+# Create docx files
+app.include_router(docx_router)
 
 # Create all database tables on startup if they don't exist
 models.Base.metadata.create_all(bind=engine)

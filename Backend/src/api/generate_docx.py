@@ -1,5 +1,5 @@
 """
-Generates a Behovsvurdering PDF using the internal RAG answerer.
+Generates a Behovsvurdering DOCX using the internal RAG answerer.
 """
 
 import io
@@ -13,13 +13,6 @@ from sqlalchemy.orm import Session
 from docx import Document
 from docx.shared import Pt, RGBColor, Inches
 from docx.enum.text import WD_ALIGN_PARAGRAPH
-
-from reportlab.lib.pagesizes import A4
-from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-from reportlab.lib.units import cm
-from reportlab.lib import colors
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, HRFlowable
-from reportlab.lib.enums import TA_CENTER
 
 from src.api.dependencies import get_current_user
 from src.db.database import get_db
@@ -54,7 +47,7 @@ class BehovsvurderingFormData(BaseModel):
 def generate_behovsvurdering_text(form: BehovsvurderingFormData) -> str:
     """
     Build a query from the form data and run it through the RAG answerer.
-    The answerer uses the local vector store (bestemmelser PDF) as context,
+    The answerer uses the local vector store (bestemmelser DOCX) as context,
     so the output is grounded in the actual regulations.
     """
     type_anlegg = form.typeAnleggAnnet if form.typeAnlegg == "annet" else form.typeAnlegg
@@ -139,7 +132,7 @@ def build_docx(text: str, kommune: str) -> bytes:
 
 # Route
 
-@router.post("/api/generate-pdf")
+@router.post("/api/generate-docx")
 async def generate_pdf(
     form: BehovsvurderingFormData,
     current_user: User = Depends(get_current_user),
