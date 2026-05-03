@@ -157,7 +157,7 @@ function App() {
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = url;
-        a.download = `behovsvurdering_${formData.kommune || "dokument"}.pdf`;
+        a.download = `behovsvurdering_${formData.kommune || "dokument"}.docx`;
         a.click();
         URL.revokeObjectURL(url);
         setShowForm(false);
@@ -190,7 +190,7 @@ function App() {
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = url;
-        a.download = `kostnadsoverslag_${kostnadsoverlagData.prosjektNavn || "prosjekt"}.pdf`;
+        a.download = `kostnadsoverslag_${kostnadsoverlagData.prosjektNavn || "prosjekt"}.docx`;
         a.click();
         URL.revokeObjectURL(url);
         setShowKostnadsoverlag(false);

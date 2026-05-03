@@ -10,6 +10,10 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
+from docx import Document
+from docx.shared import Pt, RGBColor, Inches
+from docx.enum.text import WD_ALIGN_PARAGRAPH
+
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import cm
@@ -86,87 +90,51 @@ Informasjon om anlegget:
     return result["answer"]
 
 
-# PDF builder
+# DOCX builder
 
-def build_pdf(text: str, kommune: str) -> bytes:
-    buffer = io.BytesIO()
-    doc = SimpleDocTemplate(
-        buffer,
-        pagesize=A4,
-        leftMargin=2.5 * cm,
-        rightMargin=2.5 * cm,
-        topMargin=2.5 * cm,
-        bottomMargin=2.5 * cm,
-    )
+def build_docx(text: str, kommune: str) -> bytes:
+    doc = Document()
 
-    styles = getSampleStyleSheet()
+    # Title
+    title = doc.add_paragraph()
+    title.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    run = title.add_run("Behovsvurdering")
+    run.bold = True
+    run.font.size = Pt(20)
+    run.font.color.rgb = RGBColor(0x1B, 0x20, 0x25)
 
-    style_title = ParagraphStyle(
-        "DocTitle",
-        parent=styles["Title"],
-        fontSize=18,
-        textColor=colors.HexColor("#1B2025"),
-        spaceAfter=6,
-        alignment=TA_CENTER,
-    )
-    style_subtitle = ParagraphStyle(
-        "DocSubtitle",
-        parent=styles["Normal"],
-        fontSize=11,
-        textColor=colors.HexColor("#555555"),
-        spaceAfter=20,
-        alignment=TA_CENTER,
-    )
-    style_heading = ParagraphStyle(
-        "SectionHeading",
-        parent=styles["Heading2"],
-        fontSize=12,
-        textColor=colors.HexColor("#1B2025"),
-        spaceBefore=16,
-        spaceAfter=4,
-    )
-    style_body = ParagraphStyle(
-        "Body",
-        parent=styles["Normal"],
-        fontSize=10,
-        leading=15,
-        textColor=colors.HexColor("#222222"),
-        spaceAfter=8,
-    )
-
-    story = []
-
-    story.append(Paragraph("Behovsvurdering", style_title))
     if kommune:
-        story.append(Paragraph(f"Kommune: {kommune}", style_subtitle))
-    story.append(HRFlowable(width="100%", thickness=1.5, color=colors.HexColor("#1B2025")))
-    story.append(Spacer(1, 16))
+        sub = doc.add_paragraph()
+        sub.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        sub.add_run(f"Kommune: {kommune}").font.size = Pt(11)
 
-    # Split on numbered headings
+    doc.add_paragraph("─" * 60)
+
+    # Parse sections
     sections = re.split(r'(?m)^(\d+\.\s+.+)$', text)
 
     if len(sections) <= 1:
         for line in text.split("\n"):
-            line = line.strip()
-            if line:
-                story.append(Paragraph(line, style_body))
+            if line.strip():
+                doc.add_paragraph(line.strip())
     else:
         if sections[0].strip():
-            story.append(Paragraph(sections[0].strip(), style_body))
-
+            doc.add_paragraph(sections[0].strip())
         it = iter(sections[1:])
         for heading in it:
             body = next(it, "")
-            story.append(Paragraph(heading.strip(), style_heading))
-            story.append(HRFlowable(width="100%", thickness=0.5, color=colors.HexColor("#cccccc")))
-            story.append(Spacer(1, 4))
+            h = doc.add_paragraph()
+            run = h.add_run(heading.strip())
+            run.bold = True
+            run.font.size = Pt(13)
+            run.font.color.rgb = RGBColor(0x1B, 0x20, 0x25)
             for line in body.strip().split("\n"):
-                line = line.strip()
-                if line:
-                    story.append(Paragraph(line, style_body))
+                if line.strip():
+                    doc.add_paragraph(line.strip())
 
-    doc.build(story)
-    return buffer.getvalue()
+    buf = io.BytesIO()
+    doc.save(buf)
+    return buf.getvalue()
 
 
 # Route
@@ -175,16 +143,14 @@ def build_pdf(text: str, kommune: str) -> bytes:
 async def generate_pdf(
     form: BehovsvurderingFormData,
     current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db),
 ):
     text = generate_behovsvurdering_text(form)
-    pdf_bytes = build_pdf(text, form.kommune)
-
-    filename = f"behovsvurdering_{form.kommune or 'dokument'}.pdf".replace(" ", "_")
-
+    text = clean_text(text)
+    docx_bytes = build_docx(text, form.kommune)
+    filename = f"behovsvurdering_{form.kommune or 'dokument'}.docx".replace(" ", "_")
     return StreamingResponse(
-        io.BytesIO(pdf_bytes),
-        media_type="application/pdf",
+        io.BytesIO(docx_bytes),
+        media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
         headers={"Content-Disposition": f"attachment; filename={filename}"},
     )
 
@@ -307,73 +273,48 @@ Finansiering:
     return result["answer"]
  
  
-def build_kostnadsoverlag_pdf(text: str, form: KostnadsoverlagFormData) -> bytes:
-    """Build the Kostnadsoverslag PDF."""
-    buffer = io.BytesIO()
-    doc = SimpleDocTemplate(
-        buffer,
-        pagesize=A4,
-        leftMargin=2.5 * cm,
-        rightMargin=2.5 * cm,
-        topMargin=2.5 * cm,
-        bottomMargin=2.5 * cm,
-    )
- 
-    styles = getSampleStyleSheet()
- 
-    style_title = ParagraphStyle(
-        "DocTitle", parent=styles["Title"],
-        fontSize=18, textColor=colors.HexColor("#1B2025"),
-        spaceAfter=6, alignment=TA_CENTER,
-    )
-    style_subtitle = ParagraphStyle(
-        "DocSubtitle", parent=styles["Normal"],
-        fontSize=11, textColor=colors.HexColor("#555555"),
-        spaceAfter=20, alignment=TA_CENTER,
-    )
-    style_heading = ParagraphStyle(
-        "SectionHeading", parent=styles["Heading2"],
-        fontSize=12, textColor=colors.HexColor("#1B2025"),
-        spaceBefore=16, spaceAfter=4,
-    )
-    style_body = ParagraphStyle(
-        "Body", parent=styles["Normal"],
-        fontSize=10, leading=15,
-        textColor=colors.HexColor("#222222"), spaceAfter=8,
-    )
- 
-    story = []
- 
-    story.append(Paragraph("Kostnadsoverslag", style_title))
+def build_kostnadsoverlag_docx(text: str, form) -> bytes:
+    doc = Document()
+
+    title = doc.add_paragraph()
+    title.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    run = title.add_run("Kostnadsoverslag")
+    run.bold = True
+    run.font.size = Pt(20)
+    run.font.color.rgb = RGBColor(0x1B, 0x20, 0x25)
+
     subtitle = f"{form.prosjektNavn} - {form.kommune}".strip(" -")
     if subtitle:
-        story.append(Paragraph(subtitle, style_subtitle))
-    story.append(HRFlowable(width="100%", thickness=1.5, color=colors.HexColor("#1B2025")))
-    story.append(Spacer(1, 16))
- 
+        sub = doc.add_paragraph()
+        sub.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        sub.add_run(subtitle).font.size = Pt(11)
+
+    doc.add_paragraph("─" * 60)
+
     sections = re.split(r'(?m)^(\d+\.\s+.+)$', text)
- 
+
     if len(sections) <= 1:
         for line in text.split("\n"):
-            line = line.strip()
-            if line:
-                story.append(Paragraph(line, style_body))
+            if line.strip():
+                doc.add_paragraph(line.strip())
     else:
         if sections[0].strip():
-            story.append(Paragraph(sections[0].strip(), style_body))
+            doc.add_paragraph(sections[0].strip())
         it = iter(sections[1:])
         for heading in it:
             body = next(it, "")
-            story.append(Paragraph(heading.strip(), style_heading))
-            story.append(HRFlowable(width="100%", thickness=0.5, color=colors.HexColor("#cccccc")))
-            story.append(Spacer(1, 4))
+            h = doc.add_paragraph()
+            run = h.add_run(heading.strip())
+            run.bold = True
+            run.font.size = Pt(13)
+            run.font.color.rgb = RGBColor(0x1B, 0x20, 0x25)
             for line in body.strip().split("\n"):
-                line = line.strip()
-                if line:
-                    story.append(Paragraph(line, style_body))
- 
-    doc.build(story)
-    return buffer.getvalue()
+                if line.strip():
+                    doc.add_paragraph(line.strip())
+
+    buf = io.BytesIO()
+    doc.save(buf)
+    return buf.getvalue()
 
 def clean_text(text: str) -> str:
     """Replace unsupported Unicode characters with ASCII equivalents."""
@@ -404,12 +345,10 @@ async def generate_kostnadsoverlag(
 ):
     text = generate_kostnadsoverlag_text(form)
     text = clean_text(text)
-    pdf_bytes = build_kostnadsoverlag_pdf(text, form)
- 
-    filename = f"kostnadsoverslag_{form.prosjektNavn or form.kommune or 'prosjekt'}.pdf".replace(" ", "_")
- 
+    docx_bytes = build_kostnadsoverlag_docx(text, form)
+    filename = f"kostnadsoverslag_{form.prosjektNavn or form.kommune or 'prosjekt'}.docx".replace(" ", "_")
     return StreamingResponse(
-        io.BytesIO(pdf_bytes),
-        media_type="application/pdf",
+        io.BytesIO(docx_bytes),
+        media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
         headers={"Content-Disposition": f"attachment; filename={filename}"},
     )
