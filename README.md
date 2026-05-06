@@ -21,16 +21,10 @@ pip install -r requirements.txt
 # Legg PDF-filer i data/
 python -m src.ingest.build_index
 uvicorn src.api.main:app --reload
-<<<<<<< HEAD
 or
 py -m uvicorn src.api.main:app --reload
 
 6. Open http://127.0.0.1:8000/docs to ask questions via the API
-
-
-
-pip install reportlab
-=======
 ```
 ```
 cd frontend && npm install && npm run dev
@@ -56,4 +50,3 @@ Backend-serveren må kjøre for at AI-parametrene skal fungere.
 
 - Python 3.11+, Node.js 18+, Rhino 8
 - NTNU IDUN API-tilgang
->>>>>>> main

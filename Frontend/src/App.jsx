@@ -138,7 +138,7 @@ function App() {
     const generateApplication = async () => {
     setLoading(true);
     try {
-        const response = await fetch(`${API_BASE}/api/generate-pdf`, {
+        const response = await fetch(`${API_BASE}/api/generate-docx`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
@@ -149,7 +149,7 @@ function App() {
 
         if (!response.ok) {
             const err = await response.json().catch(() => ({}));
-            console.error("PDF generation failed:", err.detail);
+            console.error("DOCX generation failed:", err.detail);
             return;
         }
 
@@ -157,7 +157,7 @@ function App() {
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = url;
-        a.download = `behovsvurdering_${formData.kommune || "dokument"}.pdf`;
+        a.download = `behovsvurdering_${formData.kommune || "dokument"}.docx`;
         a.click();
         URL.revokeObjectURL(url);
         setShowForm(false);
@@ -190,7 +190,7 @@ function App() {
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = url;
-        a.download = `kostnadsoverslag_${kostnadsoverlagData.prosjektNavn || "prosjekt"}.pdf`;
+        a.download = `kostnadsoverslag_${kostnadsoverlagData.prosjektNavn || "prosjekt"}.docx`;
         a.click();
         URL.revokeObjectURL(url);
         setShowKostnadsoverlag(false);
