@@ -4,18 +4,21 @@
     display: none;
 }
 
-.chat-col {
-    width: min(760px, 100%);
-    margin: 0 auto;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
+.main--active .chat-col {
     justify-content: flex-end;
 }
 
-/* When no messages yet, center the input vertically */
 .main--empty .chat-col {
     justify-content: center;
+}
+
+.chat-col {
+    width: min(760px, 100%);
+    margin: 0 auto;
+    min-height: 100%;
+    padding: 0 24px;
+    display: flex;
+    flex-direction: column;
 }
 
 /* ─── Messages ───────────────────────────────────────────── */
@@ -23,7 +26,6 @@
 .chat-container {
     flex: 1;
     padding: 16px 0;
-    overflow-y: auto;
 }
 
 .message {
@@ -238,12 +240,12 @@
 
 .soknad-icon-btn:hover {
     opacity: 1;
-    filter: brightness(2);
+    filter: brightness(1);
 }
 
 .soknad-icon {
-    width: 36px;
-    height: 36px;
+    width: 50px;
+    height: 50px;
     display: block;
 }
 
@@ -257,4 +259,68 @@
     opacity: 0.9;
     pointer-events: none;
     user-select: none;
+}
+/* ─── Welcome / empty state ──────────────────────────── */
+
+.welcome {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 0 24px 32px;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.welcome-logo {
+    height: 36px;
+    width: auto;
+    opacity: 0.9;
+    margin-bottom: 28px;
+}
+
+.welcome-title {
+    font-size: 26px;
+    font-weight: 600;
+    color: #f1f5f9;
+    letter-spacing: -0.02em;
+    margin-bottom: 10px;
+}
+
+.welcome-subtitle {
+    font-size: 14px;
+    color: #64748b;
+    line-height: 1.6;
+    margin-bottom: 28px;
+}
+
+.welcome-suggestions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+}
+
+.suggestion-chip {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    padding: 9px 16px;
+    color: #94a3b8;
+    font-size: 13px;
+    font-family: Inter, system-ui, sans-serif;
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+}
+
+.suggestion-chip:hover {
+    background: rgba(244, 121, 32, 0.1);
+    border-color: rgba(244, 121, 32, 0.3);
+    color: #f1f5f9;
+}
+
+/* Hide the top-right logo on empty state since welcome has its own */
+.main--empty .multiconsult-logo {
+    display: none;
 }

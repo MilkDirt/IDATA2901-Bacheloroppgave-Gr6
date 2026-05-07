@@ -33,9 +33,9 @@ html, body, #root {
 .main {
     flex: 1;
     background: var(--bg-panel);
-    overflow-y: auto;
     display: flex;
-    align-items: center;
+    flex-direction: column;
     height: 100%;
-    padding: 24px;
+    position: relative;
+    overflow: hidden;
 }

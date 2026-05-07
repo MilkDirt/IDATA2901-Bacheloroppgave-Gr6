@@ -1,6 +1,6 @@
 import React, { useRef, useEffect } from "react";
 import sendIcon from "../assets/button.png";
-import soknadIcon from "../assets/soknad-icon.png";
+import soknadIcon from "../assets/soknad-icon1.png";
 import multiconsultLogo from "../assets/multiconsult-logo.png";
 import "../Styles/chat.css";
 import ReactMarkdown from "react-markdown";
@@ -33,6 +33,26 @@ export default function ChatPanel({ input, setInput, messages, loading, sendMess
         <div className={`main ${messages.length === 0 ? "main--empty" : "main--active"}`}>
             <img src={multiconsultLogo} alt="Multiconsult" className="multiconsult-logo" />
             <div className="chat-col">
+
+                {/* ── Welcome screen (empty state only) ── */}
+                {messages.length === 0 && (
+                    <div className="welcome">
+                        <img src={multiconsultLogo} alt="Multiconsult" className="welcome-logo" />
+                        <h1 className="welcome-title">Hva kan jeg hjelpe deg med?</h1>
+                        <p className="welcome-subtitle">Still spørsmål om dine prosjekter, bestemmelser og søknader.</p>
+                        <div className="welcome-suggestions">
+                            <button className="suggestion-chip" onClick={() => { setInput("Hva er kravene for spillemidler?"); }}>
+                                Hva er kravene for spillemidler?
+                            </button>
+                            <button className="suggestion-chip" onClick={() => { setInput("Hvilke lover gjelder for byggesaker?"); }}>
+                                Hvilke lover gjelder for byggesaker?
+                            </button>
+                            <button className="suggestion-chip" onClick={() => { setInput("Hva er en behovsvurdering?"); }}>
+                                Hva er en behovsvurdering?
+                            </button>
+                        </div>
+                    </div>
+                )}
 
                 <div className="chat-container">
                     {messages.map((msg, i) => (
