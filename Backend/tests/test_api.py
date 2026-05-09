@@ -1,11 +1,11 @@
 """
-Tester for RAG API.
+Tests for RAG API.
 
-Dekker:
-- Autentisering (registrering, innlogging, validering)
-- Prosjekter (opprett, hent, slett)
-- Samtaler og meldinger (opprett, hent, slett)
-- Bygningsgenerering (parametere fra beskrivelse)
+Covers:
+- Authentication (registration, login, validation)
+- Projects (create, retrieve, delete)
+- Conversations and messages (create, retrieve, delete)
+- Building generation (parameters from description)
 """
 
 import pytest
@@ -76,7 +76,7 @@ def auth_headers(registered_user):
     return {"Authorization": f"Bearer {registered_user['access_token']}"}
 
 
-# ── Autentisering ─────────────────────────────────────────
+# ── Authentication ────────────────────────────────────────
 
 class TestRegistrering:
 
@@ -146,7 +146,7 @@ class TestInnlogging:
         assert res.status_code == 401
 
 
-# ── Prosjekter ────────────────────────────────────────────
+# ── Projects ──────────────────────────────────────────────
 
 class TestProsjekter:
 
@@ -174,7 +174,7 @@ class TestProsjekter:
         assert res.status_code == 404
 
 
-# ── Samtaler ──────────────────────────────────────────────
+# ── Conversations ─────────────────────────────────────────
 
 class TestSamtaler:
 
@@ -215,7 +215,7 @@ class TestSamtaler:
         assert res.json()[0]["role"] == "user"
 
 
-# ── Bygningsgenerering ────────────────────────────────────
+# ── Building generation ───────────────────────────────────
 
 class TestBygningsgenerering:
 
