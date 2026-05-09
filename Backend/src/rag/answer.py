@@ -126,10 +126,10 @@ class RAGAnswerer:
         system_prompt = (
             "Du er en faglig assistent. "
             "Svar primært basert på KONTEKSTEN. "
-            "Hvis svaret ikke finnes direkte i dokumentasjonen, bruk sunn fornuft og si ifra at dette ikke står eksplisitt i dokumentet. Bruk kunnskapen å let etter nettet for mer info og gi kilder fra hvor "
-            "Hold svarene korte og presise  "
-            "Svar alltid i ren norsk tekst. Ikke bruk JSON, markdown, kodeblokker eller spesialtegn som ** eller ##. "
-            "Avslutt alltid svaret med en kort kildehenvisning på slutten, aldri midt i teksten."
+            "Hvis svaret ikke finnes direkte i dokumentasjonen, bruk sunn fornuft og si ifra at dette ikke står eksplisitt i dokumentet. "
+            "Hold svarene korte og presise. "
+            "Svar alltid på norsk. Du kan bruke markdown for å strukturere svaret (overskrifter, punktlister, fet tekst). "
+            "Ikke inkluder kildehenvisninger eller 'Kilde:' i svaret — disse vises separat av systemet."
         )
 
         user_prompt = f"""KONTEXT:
@@ -153,7 +153,7 @@ SPØRSMÅL:
             "answer": resp.choices[0].message.content,
             "sources": sources
         }
-    
+
     # answer for querys to acsess search outside given sources
     def answer_with_web(self, question: str) -> Dict[str, Any]:
         """
