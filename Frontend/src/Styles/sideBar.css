@@ -183,3 +183,146 @@
     background: #333;
     border-radius: 4px;
 }
+/* ─── Projects header ────────────────────────────────── */
+.projects-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.add-project-btn {
+    background: none;
+    border: none;
+    color: #F47920;
+    cursor: pointer;
+    font-size: 18px;
+    line-height: 1;
+    padding: 0 2px;
+    transition: opacity 0.15s;
+}
+
+.add-project-btn:hover {
+    opacity: 0.75;
+}
+
+/* ─── New project form ───────────────────────────────── */
+.new-project-form {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 10px;
+    min-width: 0;
+}
+
+.new-project-input {
+    flex: 1;
+    min-width: 0;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 6px;
+    padding: 6px 10px;
+    color: #e5e7eb;
+    font-size: 12px;
+    font-family: Inter, system-ui, sans-serif;
+    outline: none;
+    transition: border-color 0.15s;
+}
+
+.new-project-input:focus {
+    border-color: rgba(244, 121, 32, 0.4);
+}
+
+.new-project-confirm {
+    background: #F47920;
+    border: none;
+    border-radius: 6px;
+    padding: 6px 10px;
+    color: #fff;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 600;
+    flex-shrink: 0;
+    font-family: Inter, system-ui, sans-serif;
+    transition: opacity 0.15s;
+}
+
+.new-project-confirm:hover {
+    opacity: 0.85;
+}
+
+/* ─── Project row & children ─────────────────────────── */
+.project-row {
+    margin-bottom: 4px;
+}
+
+.project-chevron {
+    margin-right: 6px;
+    font-size: 11px;
+    flex-shrink: 0;
+}
+
+.project-conversations {
+    margin-left: 16px;
+}
+
+.new-conv-btn {
+    width: 100%;
+    background: none;
+    border: 1px dashed #444;
+    border-radius: 5px;
+    color: #666;
+    cursor: pointer;
+    padding: 5px;
+    font-size: 12px;
+    margin-bottom: 4px;
+    font-family: Inter, system-ui, sans-serif;
+    transition: border-color 0.15s, color 0.15s;
+}
+
+.new-conv-btn:hover {
+    border-color: #666;
+    color: #94a3b8;
+}
+
+/* ─── Divider ────────────────────────────────────────── */
+.sidebar-divider {
+    border-top: 1px solid #2a2a2a;
+    margin: 12px 0;
+}
+
+/* ─── Empty state spaced ─────────────────────────────── */
+.empty-state--spaced {
+    margin-bottom: 16px;
+}
+
+/* ─── User section ───────────────────────────────────── */
+.sidebar-user-label {
+    font-size: 13px;
+    color: #94a3b8;
+    margin-bottom: 4px;
+}
+
+.sidebar-user-name {
+    font-size: 14px;
+    color: #f1f5f9;
+    margin-bottom: 12px;
+    font-weight: 500;
+}
+
+.logout-btn {
+    width: 100%;
+    padding: 8px;
+    background: transparent;
+    border: 1px solid #444;
+    border-radius: 6px;
+    color: #94a3b8;
+    cursor: pointer;
+    font-size: 13px;
+    font-family: Inter, system-ui, sans-serif;
+    transition: border-color 0.15s, color 0.15s;
+}
+
+.logout-btn:hover {
+    border-color: #666;
+    color: #f1f5f9;
+}

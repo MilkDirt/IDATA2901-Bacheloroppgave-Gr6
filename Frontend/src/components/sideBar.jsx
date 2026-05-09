@@ -212,69 +212,47 @@ export default function Sidebar({
             <div className="projects-section">
 
                 {/* Projects header */}
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
+                <div className="projects-header">
                     <h3 style={{ margin: 0 }}>Prosjekter</h3>
                     <button
                         onClick={() => setShowNewProjectInput(!showNewProjectInput)}
-                        style={{
-                            background: "none", border: "none",
-                            color: "#F47920", cursor: "pointer",
-                            fontSize: "18px", lineHeight: 1,
-                        }}
+                        className="add-project-btn"
                         title="Nytt prosjekt"
                     >+</button>
                 </div>
 
                 {/* New project input */}
                 {showNewProjectInput && (
-                    <div style={{ display: "flex", gap: "6px", marginBottom: "10px", minWidth: 0 }}>
+                    <div className="new-project-form">
                         <input
                             value={newProjectName}
                             onChange={e => setNewProjectName(e.target.value)}
                             onKeyDown={e => e.key === "Enter" && createProject()}
                             placeholder="Prosjektnavn..."
                             autoFocus
-                            style={{
-                                flex: 1,
-                                minWidth: 0,
-                                background: "rgba(255,255,255,0.06)",
-                                border: "1px solid rgba(255,255,255,0.12)",
-                                borderRadius: "6px", padding: "6px 10px",
-                                color: "#e5e7eb", fontSize: "12px",
-                                fontFamily: "Inter, system-ui, sans-serif",
-                            }}
+                            className="new-project-input"
                         />
-                        <button
-                            onClick={createProject}
-                            style={{
-                                background: "#F47920", border: "none",
-                                borderRadius: "6px", padding: "6px 10px",
-                                color: "#fff", cursor: "pointer",
-                                fontSize: "12px", fontWeight: "600",
-                                flexShrink: 0,
-                            }}
-                        >OK</button>
+                        <button onClick={createProject} className="new-project-confirm">OK</button>
                     </div>
                 )}
 
                 {/* Project list */}
                 {projects.length === 0 && (
-                    <div className="empty-state" style={{ marginBottom: "16px" }}>
+                    <div className="empty-state empty-state--spaced">
                         Ingen prosjekter ennå
                     </div>
                 )}
 
                 {projects.map(project => (
-                    <div key={project.id} style={{ marginBottom: "4px" }}>
+                    <div key={project.id} className="project-row">
                         <div
                             className="project-item"
                             onClick={() => toggleProject(project.id)}
-                            style={{ fontWeight: "500" }}
                         >
-                            <span style={{ marginRight: "6px", fontSize: "11px" }}>
+                            <span className="project-chevron">
                                 {expandedProjects[project.id] ? "▼" : "▶"}
                             </span>
-                            <span className="project-name"> {project.name}</span>
+                            <span className="project-name">{project.name}</span>
                             <button
                                 className="delete-conversation-btn"
                                 onClick={(e) => deleteProject(project.id, e)}
@@ -283,17 +261,10 @@ export default function Sidebar({
                         </div>
 
                         {expandedProjects[project.id] && (
-                            <div style={{ marginLeft: "16px" }}>
+                            <div className="project-conversations">
                                 <button
                                     onClick={() => handleNewChat(project.id)}
-                                    style={{
-                                        width: "100%", background: "none",
-                                        border: "1px dashed #444", borderRadius: "5px",
-                                        color: "#888", cursor: "pointer",
-                                        padding: "5px", fontSize: "12px",
-                                        marginBottom: "4px",
-                                        fontFamily: "Inter, system-ui, sans-serif",
-                                    }}
+                                    className="new-conv-btn"
                                 >
                                     + Ny samtale
                                 </button>
@@ -323,7 +294,7 @@ export default function Sidebar({
                 ))}
 
                 {/* Divider */}
-                <div style={{ borderTop: "1px solid #2a2a2a", margin: "12px 0" }} />
+                <div className="sidebar-divider" />
 
                 {/* Conversations without project */}
                 <h3>Samtaler</h3>
@@ -350,24 +321,9 @@ export default function Sidebar({
 
             {/* User info and logout — hidden when collapsed */}
             <div className="sidebar-user">
-                <div style={{ fontSize: "13px", color: "#94a3b8", marginBottom: "4px" }}>
-                    Innlogget som
-                </div>
-                <div style={{ fontSize: "14px", color: "#f1f5f9", marginBottom: "12px", fontWeight: "500" }}>
-                    {user?.name}
-                </div>
-                <button
-                    onClick={onLogout}
-                    style={{
-                        width: "100%", padding: "8px",
-                        background: "transparent", border: "1px solid #444",
-                        borderRadius: "6px", color: "#94a3b8",
-                        cursor: "pointer", fontSize: "13px",
-                        fontFamily: "Inter, system-ui, sans-serif",
-                    }}
-                >
-                    Logg ut
-                </button>
+                <div className="sidebar-user-label">Innlogget som</div>
+                <div className="sidebar-user-name">{user?.name}</div>
+                <button onClick={onLogout} className="logout-btn">Logg ut</button>
             </div>
 
         </div>

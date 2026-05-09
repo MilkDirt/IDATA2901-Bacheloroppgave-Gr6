@@ -22,12 +22,28 @@ export default function ChatPanel({ input, setInput, messages, loading, sendMess
         messagesEndRef?.current?.scrollIntoView({ behavior: "smooth" });
     }, [messages, loading]);
 
+    const pendingChip = useRef(null);
+
     const handleSend = () => {
         if (!input.trim() || loading) return;
         sendMessage();
         setInput("");
         resizeTextarea();
     };
+
+    // When a chip is clicked, store text in ref + state, then trigger send on next render
+    const handleChipClick = (text) => {
+        pendingChip.current = text;
+        setInput(text);
+    };
+
+    useEffect(() => {
+        if (pendingChip.current && input === pendingChip.current) {
+            pendingChip.current = null;
+            sendMessage();
+            setInput("");
+        }
+    }, [input]);
 
     return (
         <div className={`main ${messages.length === 0 ? "main--empty" : "main--active"}`}>
@@ -41,13 +57,13 @@ export default function ChatPanel({ input, setInput, messages, loading, sendMess
                         <h1 className="welcome-title">Hva kan jeg hjelpe deg med?</h1>
                         <p className="welcome-subtitle">Still spørsmål om dine prosjekter, bestemmelser og søknader.</p>
                         <div className="welcome-suggestions">
-                            <button className="suggestion-chip" onClick={() => { setInput("Hva er kravene for spillemidler?"); }}>
+                            <button className="suggestion-chip" onClick={() => handleChipClick("Hva er kravene for spillemidler?")}>
                                 Hva er kravene for spillemidler?
                             </button>
-                            <button className="suggestion-chip" onClick={() => { setInput("Hvilke lover gjelder for byggesaker?"); }}>
+                            <button className="suggestion-chip" onClick={() => handleChipClick("Hvilke lover gjelder for byggesaker?")}>
                                 Hvilke lover gjelder for byggesaker?
                             </button>
-                            <button className="suggestion-chip" onClick={() => { setInput("Hva er en behovsvurdering?"); }}>
+                            <button className="suggestion-chip" onClick={() => handleChipClick("Hva er en behovsvurdering?")}>
                                 Hva er en behovsvurdering?
                             </button>
                         </div>
@@ -55,53 +71,59 @@ export default function ChatPanel({ input, setInput, messages, loading, sendMess
                 )}
 
                 <div className="chat-container">
-                    {messages.map((msg, i) => (
-                        <div key={i} className={`message ${msg.role}`}>
-                            <div className="message-content">
-                                {msg.role === "assistant"
-                                    ?<ReactMarkdown
-                                        remarkPlugins={[remarkGfm]}
-                                        components={{
-                                            // Remove extra <p> wrapping inside list items
-                                            li: ({children}) => <li>{children}</li>,
-                                            p: ({children, node}) => {
-                                                // If <p> is inside a list item render as span not block
-                                                const parent = node?.position;
-                                                return <p style={{margin: "0 0 4px 0"}}>{children}</p>;
-                                            },
-                                            ul: ({children}) => <ul style={{paddingLeft: "20px", margin: "4px 0"}}>{children}</ul>,
-                                            ol: ({children}) => <ol style={{paddingLeft: "20px", margin: "4px 0"}}>{children}</ol>,
-                                            h1: ({children}) => <h1 style={{margin: "8px 0 2px 0"}}>{children}</h1>,
-                                            h2: ({children}) => <h2 style={{margin: "8px 0 2px 0"}}>{children}</h2>,
-                                            h3: ({children}) => <h3 style={{margin: "6px 0 2px 0"}}>{children}</h3>,
-                                        }}
-                                    >
-                                        {msg.content}
-                                    </ReactMarkdown>
-                                    : msg.content
-                                }
-                            </div>
-
-                            {msg.role === "assistant" && msg.sources?.length > 0 && (
-                                <div className="sources">
-                                    <strong>Kilder:</strong>
-                                    <ul>
-                                        {msg.sources.map((source, j) => (
-                                            <li key={j}>{source.source_file} (side {source.page})</li>
-                                        ))}
-                                    </ul>
+                    <div className="chat-container-inner">
+                        {messages.map((msg, i) => (
+                            <div key={i} className={`message ${msg.role}`}>
+                                <div className="message-content">
+                                    {msg.role === "assistant"
+                                        ?<ReactMarkdown
+                                            remarkPlugins={[remarkGfm]}
+                                            components={{
+                                                // Remove extra <p> wrapping inside list items
+                                                li: ({children}) => <li>{children}</li>,
+                                                p: ({children, node}) => {
+                                                    // If <p> is inside a list item render as span not block
+                                                    const parent = node?.position;
+                                                    return <p style={{margin: "0 0 4px 0"}}>{children}</p>;
+                                                },
+                                                ul: ({children}) => <ul style={{paddingLeft: "20px", margin: "4px 0"}}>{children}</ul>,
+                                                ol: ({children}) => <ol style={{paddingLeft: "20px", margin: "4px 0"}}>{children}</ol>,
+                                                h1: ({children}) => <h1 style={{margin: "8px 0 2px 0"}}>{children}</h1>,
+                                                h2: ({children}) => <h2 style={{margin: "8px 0 2px 0"}}>{children}</h2>,
+                                                h3: ({children}) => <h3 style={{margin: "6px 0 2px 0"}}>{children}</h3>,
+                                            }}
+                                        >
+                                            {msg.content}
+                                        </ReactMarkdown>
+                                        : msg.content
+                                    }
                                 </div>
-                            )}
-                        </div>
-                    ))}
 
-                    {loading && (
-                        <div className="message assistant">
-                            <div className="message-content">Skriver...</div>
-                        </div>
-                    )}
+                                {msg.role === "assistant" && msg.sources?.length > 0 && (
+                                    <div className="sources">
+                                        <strong>Kilder:</strong>
+                                        <ul>
+                                            {msg.sources.map((source, j) => (
+                                                <li key={j}>{source.source_file} (side {source.page})</li>
+                                            ))}
+                                        </ul>
+                                    </div>
+                                )}
+                            </div>
+                        ))}
 
-                    <div ref={messagesEndRef} />
+                        {loading && (
+                            <div className="message assistant">
+                                <div className="message-content typing-indicator">
+                                    <span></span>
+                                    <span></span>
+                                    <span></span>
+                                </div>
+                            </div>
+                        )}
+
+                        <div ref={messagesEndRef} />
+                    </div>
                 </div>
 
                 {/* Input row with søknad icon on the left */}
