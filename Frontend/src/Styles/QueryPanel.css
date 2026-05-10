@@ -129,7 +129,7 @@
 .panel-content input:focus,
 .panel-content select:focus,
 .panel-content textarea:focus {
-    border-color: rgba(244, 121, 32, 0.45);
+    border-color: rgb(69, 69, 69);
 }
 
 .panel-content input::placeholder,

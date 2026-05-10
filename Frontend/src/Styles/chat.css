@@ -334,8 +334,8 @@
 }
 
 .suggestion-chip:hover {
-    background: rgba(244, 121, 32, 0.1);
-    border-color: rgba(244, 121, 32, 0.3);
+    background: rgba(80, 80, 80, 0.18);
+    border-color: rgb(83, 83, 83);
     color: #f1f5f9;
 }
 
