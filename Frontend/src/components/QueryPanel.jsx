@@ -31,6 +31,14 @@ export default function QueryPanel({
         else generateKostnadsoverlag();
     };
 
+    const handleReset = () => {
+        if (activeSchema === "behovsvurdering") {
+            setFormData({});
+        } else {
+            setKostnadsoverlagData({});
+        }
+    };
+
     return (
         <div className={`slide-panel ${show ? "open" : ""}`}>
             <div className="panel-header">
@@ -222,6 +230,9 @@ export default function QueryPanel({
             <div className="panel-footer">
                 <button className="generate-btn" onClick={handleGenerate}>
                     Generer {SCHEMAS[activeSchema].toLowerCase()}
+                </button>
+                <button className="reset-btn" onClick={handleReset}>
+                    Tøm skjema
                 </button>
             </div>
         </div>

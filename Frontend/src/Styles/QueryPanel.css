@@ -210,3 +210,21 @@
     opacity: 0.5;
     cursor: not-allowed;
 }
+
+.reset-btn {
+    width: 100%;
+    padding: 9px;
+    margin-top: 8px;
+    background: transparent;
+    color: #6b7280;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    cursor: pointer;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-family: inherit;
+    transition: color 0.15s, border-color 0.15s;
+}
+
+.reset-btn:hover {
+    color: #f87171;
+}
