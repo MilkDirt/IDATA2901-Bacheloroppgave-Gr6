@@ -1,9 +1,4 @@
 # -*- coding: utf-8 -*-
-"""
-Plasser Bygg på Terreng — Rhino plugin for placing a generated building on a terrain mesh.
-Flattens the terrain under the building footprint and moves the building to match.
-Uses a smooth blend zone around the footprint to avoid sharp terrain edges.
-"""
 import Rhino
 import Rhino.Geometry as rg
 import rhinoscriptsyntax as rs
@@ -12,226 +7,186 @@ import Eto.Forms as ef
 import Eto.Drawing as ed
 
 
-class PlasserByggDialog(ef.Dialog):
-    """Main dialog for placing a building onto a terrain mesh."""
+class PlasserByggDialog(ef.Form):
 
     def __init__(self):
         super(PlasserByggDialog, self).__init__()
-        self.Title = "Plasser Bygg på Terreng"
-        self.Padding = ed.Padding(10)
+        self.Title     = "Plasser Bygg"
+        self.Padding   = ed.Padding(10)
         self.Resizable = False
+        self.Owner     = Rhino.UI.RhinoEtoApp.MainWindow  # always on top of Rhino
+        self._terrain_id   = None
+        self._building_ids = None
         self._build_ui()
 
     def _build_ui(self):
-        """Build and arrange all UI elements in the dialog."""
-        info_label = ef.Label()
-        info_label.Text = "Velg terreng-mesh, deretter bygget."
+        layout = ef.TableLayout()
+        layout.Spacing = ed.Size(4, 6)
+
+        # Status badges
+        self._t_lbl = self._lbl("Terreng:  -")
+        self._b_lbl = self._lbl("Bygg:     -")
+        box = ef.GroupBox(); box.Text = "Valgt"; box.Width = 260
+        inn = ef.TableLayout(); inn.Padding = ed.Padding(6); inn.Spacing = ed.Size(0, 2)
+        inn.Rows.Add(ef.TableRow(ef.TableCell(self._t_lbl)))
+        inn.Rows.Add(ef.TableRow(ef.TableCell(self._b_lbl)))
+        box.Content = inn
+        layout.Rows.Add(ef.TableRow(ef.TableCell(box)))
+
+        layout.Rows.Add(ef.TableRow(ef.TableCell(self._btn("1. Velg terreng", self.on_velg_terreng))))
+        layout.Rows.Add(ef.TableRow(ef.TableCell(self._btn("2. Velg bygg", self.on_velg_bygg))))
+        layout.Rows.Add(ef.TableRow(ef.TableCell(self._gap(2))))
+        layout.Rows.Add(ef.TableRow(ef.TableCell(self._btn("Flytt bygg", self.on_flytt, ed.Colors.DarkBlue))))
+        layout.Rows.Add(ef.TableRow(ef.TableCell(self._btn("Plasser pa terreng", self.on_plasser, ed.Colors.DarkGreen))))
+        layout.Rows.Add(ef.TableRow(ef.TableCell(self._gap(2))))
 
         self.status_label = ef.Label()
-        self.status_label.Text = "Klar."
+        self.status_label.Text = "Velg terreng og bygg."
         self.status_label.TextColor = ed.Colors.Gray
-
-        plasser_btn = ef.Button()
-        plasser_btn.Text = "Plasser Bygg på Terreng"
-        plasser_btn.Click += self.on_plasser
-
-        avbryt_btn = ef.Button()
-        avbryt_btn.Text = "Avbryt"
-        avbryt_btn.Click += self.on_avbryt
-
-        btn_row = ef.TableLayout()
-        btn_row.Spacing = ed.Size(5, 0)
-        btn_row.Rows.Add(ef.TableRow(
-            ef.TableCell(avbryt_btn),
-            ef.TableCell(plasser_btn)
-        ))
-
-        layout = ef.TableLayout()
-        layout.Spacing = ed.Size(5, 8)
-        layout.Rows.Add(ef.TableRow(ef.TableCell(info_label)))
+        self.status_label.Width = 260
         layout.Rows.Add(ef.TableRow(ef.TableCell(self.status_label)))
-        layout.Rows.Add(ef.TableRow(ef.TableCell(btn_row)))
+
+        rb = ef.Button(); rb.Text = "Nullstill"; rb.Width = 100; rb.Click += self.on_reset
+        cb = ef.Button(); cb.Text = "Lukk";      cb.Width = 100; cb.Click += lambda s, e: self.Close()
+        br = ef.TableLayout(); br.Spacing = ed.Size(6, 0)
+        br.Rows.Add(ef.TableRow(ef.TableCell(rb, False), ef.TableCell(cb, False), ef.TableCell(ef.Label())))
+        layout.Rows.Add(ef.TableRow(ef.TableCell(br)))
         self.Content = layout
 
-    def _set_status(self, text, color):
-        """Update the status label with a message and color."""
+    def _lbl(self, t):
+        l = ef.Label(); l.Text = t; l.TextColor = ed.Colors.Gray; l.Width = 240; return l
+
+    def _btn(self, t, h, c=None):
+        b = ef.Button(); b.Text = t; b.Width = 260
+        if c: b.TextColor = c
+        b.Click += h; return b
+
+    def _gap(self, h=4):
+        l = ef.Label(); l.Height = h; return l
+
+    def _set_status(self, text, color=None):
         self.status_label.Text = text
-        self.status_label.TextColor = color
+        self.status_label.TextColor = color or ed.Colors.Gray
 
-    def _get_building_bounds(self, doc, building_ids):
-        """
-        Calculate the combined XY bounding box and minimum Z of all building objects.
-        Returns (x_min, x_max, y_min, y_max, z_min) or None if no valid geometry found.
-        """
-        all_min_x, all_min_y, all_max_x, all_max_y = [], [], [], []
-        building_z_min = float('inf')
+    def _refresh(self):
+        doc = Rhino.RhinoDoc.ActiveDoc
+        if self._terrain_id and doc.Objects.Find(self._terrain_id):
+            self._t_lbl.Text = "Terreng:  OK"; self._t_lbl.TextColor = ed.Colors.Green
+        else:
+            self._t_lbl.Text = "Terreng:  -"; self._t_lbl.TextColor = ed.Colors.Gray
+        if self._building_ids:
+            self._b_lbl.Text = "Bygg:     OK ({})".format(len(self._building_ids))
+            self._b_lbl.TextColor = ed.Colors.Green
+        else:
+            self._b_lbl.Text = "Bygg:     -"; self._b_lbl.TextColor = ed.Colors.Gray
 
-        for bid in building_ids:
+    def on_velg_terreng(self, sender, e):
+        self._set_status("Klikk pa terreng...", ed.Colors.Orange)
+        tid = rs.GetObject("Velg terreng-mesh", rs.filter.mesh)
+        if not tid or not rs.coercemesh(tid):
+            self._set_status("Ingen terreng valgt.", ed.Colors.Red); return
+        self._terrain_id = tid
+        self._refresh()
+        self._set_status("Terreng OK.", ed.Colors.Green)
+
+    def on_velg_bygg(self, sender, e):
+        if not self._terrain_id:
+            self._set_status("Velg terreng forst!", ed.Colors.Red); return
+        doc = Rhino.RhinoDoc.ActiveDoc
+        rs.HideObject(self._terrain_id); doc.Views.Redraw()
+        ids = rs.GetObjects("Velg bygg, trykk Enter", preselect=False)
+        rs.ShowObject(self._terrain_id); doc.Views.Redraw()
+        if not ids:
+            self._set_status("Ingen bygg valgt.", ed.Colors.Red); return
+        self._building_ids = list(ids)
+        self._refresh()
+        self._set_status("{} obj husket.".format(len(ids)), ed.Colors.Green)
+
+    def on_reset(self, sender, e):
+        self._terrain_id = None; self._building_ids = None
+        self._refresh(); self._set_status("Nullstilt.", ed.Colors.Gray)
+
+    def on_flytt(self, sender, e):
+        if not self._building_ids:
+            self._set_status("Velg bygg forst!", ed.Colors.Red); return
+        rs.UnselectAllObjects()
+        rs.SelectObjects(self._building_ids)
+        self._set_status("Markert. Bruk Move / Gumball.", ed.Colors.Green)
+
+    def on_plasser(self, sender, e):
+        if not self._terrain_id or not self._building_ids:
+            self._set_status("Velg terreng og bygg forst!", ed.Colors.Red); return
+        doc = Rhino.RhinoDoc.ActiveDoc
+        terrain_mesh = rs.coercemesh(self._terrain_id)
+        if not terrain_mesh:
+            self._set_status("Terreng ikke funnet!", ed.Colors.Red); return
+
+        self._set_status("Jobber...", ed.Colors.Orange)
+
+        xs0, xs1, ys0, ys1, zmin = [], [], [], [], float('inf')
+        for bid in self._building_ids:
             obj = doc.Objects.Find(bid)
-            if obj is None:
-                continue
-            bbox = obj.Geometry.GetBoundingBox(True)
-            all_min_x.append(bbox.Min.X)
-            all_min_y.append(bbox.Min.Y)
-            all_max_x.append(bbox.Max.X)
-            all_max_y.append(bbox.Max.Y)
-            if bbox.Min.Z < building_z_min:
-                building_z_min = bbox.Min.Z
+            if obj is None: continue
+            bb = obj.Geometry.GetBoundingBox(True)
+            xs0.append(bb.Min.X); xs1.append(bb.Max.X)
+            ys0.append(bb.Min.Y); ys1.append(bb.Max.Y)
+            if bb.Min.Z < zmin: zmin = bb.Min.Z
+        if not xs0:
+            self._set_status("Feil: ingen geometri.", ed.Colors.Red); return
 
-        if not all_min_x:
-            return None
+        x0, x1, y0, y1 = min(xs0), max(xs1), min(ys0), max(ys1)
 
-        return (min(all_min_x), max(all_max_x),
-                min(all_min_y), max(all_max_y),
-                building_z_min)
-
-    def _sample_terrain_heights(self, terrain_mesh, x_min, x_max, y_min, y_max, samples=10):
-        """
-        Cast rays downward from a grid of points within the given XY bounds
-        and collect the terrain Z values at each hit point.
-        Returns a list of Z values, or an empty list if no hits.
-        """
-        z_values = []
-        for i in range(samples + 1):
-            for j in range(samples + 1):
-                sx = x_min + (x_max - x_min) * i / samples
-                sy = y_min + (y_max - y_min) * j / samples
-                ray = rg.Ray3d(rg.Point3d(sx, sy, 10000), rg.Vector3d(0, 0, -1))
+        zv = []
+        for i in range(9):
+            for j in range(9):
+                x = x0 + (x1-x0)*i/8.0; y = y0 + (y1-y0)*j/8.0
+                ray = rg.Ray3d(rg.Point3d(x, y, 99999), rg.Vector3d(0,0,-1))
                 t = rg.Intersect.Intersection.MeshRay(terrain_mesh, ray)
-                if t >= 0:
-                    z_values.append(10000 + (-1) * t)
-        return z_values
+                if t >= 0: zv.append(99999 - t)
+        if not zv:
+            self._set_status("Ingen terreng-treff!", ed.Colors.Red); return
 
-    def _calculate_flat_z(self, terrain_z_values):
-        """
-        Calculate the target Z level to flatten the terrain to under the building.
-        Uses average height slightly shifted toward the minimum for a natural grounded look,
-        so the building appears embedded in the terrain rather than sitting on a pedestal.
-        """
-        avg_z = sum(terrain_z_values) / len(terrain_z_values)
-        min_z = min(terrain_z_values)
-        return avg_z - (avg_z - min_z) * 0.3
+        avg = sum(zv)/len(zv)
+        fz  = avg - (avg - min(zv)) * 0.3
 
-    def _flatten_terrain(self, terrain_mesh, x_min, x_max, y_min, y_max,
-                         flat_z, blend_distance=8.0):
-        """
-        Modify terrain mesh vertices to create a flat building pad.
-        Vertices inside the footprint are snapped to flat_z.
-        Vertices within blend_distance outside the footprint are smoothly interpolated
-        back to their original height, avoiding sharp terrain edges.
-        """
-        vertices = terrain_mesh.Vertices
-
-        for vi in range(vertices.Count):
-            v = vertices[vi]
-            vx, vy, vz = v.X, v.Y, v.Z
-
-            if x_min <= vx <= x_max and y_min <= vy <= y_max:
-                vertices[vi] = rg.Point3f(vx, vy, float(flat_z))
+        blend = 8.0
+        cx0=x0-blend; cx1=x1+blend; cy0=y0-blend; cy1=y1+blend
+        verts = terrain_mesh.Vertices
+        for vi in range(verts.Count):
+            v=verts[vi]; vx,vy,vz = v.X,v.Y,v.Z
+            if vx<cx0 or vx>cx1 or vy<cy0 or vy>cy1: continue
+            if x0<=vx<=x1 and y0<=vy<=y1:
+                verts[vi] = rg.Point3f(vx, vy, float(fz))
             else:
-                dx = max(x_min - vx, 0, vx - x_max)
-                dy = max(y_min - vy, 0, vy - y_max)
-                dist = (dx ** 2 + dy ** 2) ** 0.5
-
-                if dist < blend_distance:
-                    t = dist / blend_distance
-                    blend = 1.0 - (1.0 - t) ** 2
-                    new_z = flat_z + (vz - flat_z) * blend
-                    vertices[vi] = rg.Point3f(vx, vy, float(new_z))
+                dx=max(x0-vx,0.0,vx-x1); dy=max(y0-vy,0.0,vy-y1)
+                d=(dx*dx+dy*dy)**0.5
+                if d < blend:
+                    t=d/blend; bv=1.0-(1.0-t)**2
+                    verts[vi] = rg.Point3f(vx, vy, float(fz+(vz-fz)*bv))
 
         terrain_mesh.Normals.ComputeNormals()
         terrain_mesh.UnifyNormals()
-
-        # Only reapply height colors if mesh uses vertex colors (no satellite texture).
-        # If VertexColors is empty the mesh has a material texture - skip to avoid crash.
         if terrain_mesh.VertexColors.Count > 0:
             import System.Drawing as sd
-            all_z = [terrain_mesh.Vertices[vi].Z for vi in range(terrain_mesh.Vertices.Count)]
-            z_min_all = min(all_z)
-            z_max_all = max(all_z)
-            z_range = max(z_max_all - z_min_all, 0.1)
-
+            all_z=[terrain_mesh.Vertices[vi].Z for vi in range(terrain_mesh.Vertices.Count)]
+            z_lo=min(all_z); z_rng=max(max(all_z)-z_lo, 0.1)
             for vi in range(terrain_mesh.Vertices.Count):
-                t = (terrain_mesh.Vertices[vi].Z - z_min_all) / z_range
-                if t < 0.5:
-                    tt = t / 0.5
-                    r, g, b = int(tt*210), int(150+tt*85), int(60-tt*60)
-                else:
-                    tt = (t - 0.5) / 0.5
-                    r, g, b = int(210+tt*45), int(235-tt*200), int(tt*220)
-                terrain_mesh.VertexColors[vi] = sd.Color.FromArgb(
-                    max(0, min(255, r)), max(0, min(255, g)), max(0, min(255, b)))
+                t=(terrain_mesh.Vertices[vi].Z-z_lo)/z_rng
+                if t<0.5: tt=t/0.5; r,g,b=int(tt*210),int(150+tt*85),int(60-tt*60)
+                else: tt=(t-0.5)/0.5; r,g,b=int(210+tt*45),int(235-tt*200),int(tt*220)
+                terrain_mesh.VertexColors[vi]=sd.Color.FromArgb(max(0,min(255,r)),max(0,min(255,g)),max(0,min(255,b)))
 
-    def _move_building_to_z(self, doc, building_ids, current_z_min, target_z):
-        """Translate all building objects vertically so the base aligns with target_z."""
-        xform = rg.Transform.Translation(rg.Vector3d(0, 0, target_z - current_z_min))
-        for bid in building_ids:
+        doc.Objects.Replace(self._terrain_id, terrain_mesh)
+
+        xform = rg.Transform.Translation(rg.Vector3d(0, 0, fz - zmin))
+        for bid in self._building_ids:
             obj = doc.Objects.Find(bid)
-            if obj is not None:
-                doc.Objects.Transform(bid, xform, True)
-
-    def on_avbryt(self, sender, e):
-        self.Close()
-
-    def on_plasser(self, sender, e):
-        """Main handler — selects terrain and building, flattens terrain, places building."""
-        doc = Rhino.RhinoDoc.ActiveDoc
-
-        self._set_status("Velg terreng-mesh...", ed.Colors.Orange)
-        terrain_id = rs.GetObject("Velg terreng-mesh", rs.filter.mesh)
-        if not terrain_id:
-            self._set_status("Ingen terreng valgt!", ed.Colors.Red)
-            return
-
-        terrain_mesh = rs.coercemesh(terrain_id)
-        if not terrain_mesh:
-            self._set_status("Ugyldig terreng-mesh!", ed.Colors.Red)
-            return
-
-        # Hide terrain so it cannot be accidentally picked during building selection
-        rs.HideObject(terrain_id)
-        doc.Views.Redraw()
-
-        self._set_status("Velg bygget - terreng er midlertidig skjult...", ed.Colors.Orange)
-        building_ids = rs.GetObjects("Velg alle bygningsobjekter og trykk Enter", preselect=False)
-
-        # Always restore terrain visibility before doing anything else
-        rs.ShowObject(terrain_id)
-        doc.Views.Redraw()
-
-        if not building_ids:
-            self._set_status("Ingen bygning valgt!", ed.Colors.Red)
-            return
-
-        bounds = self._get_building_bounds(doc, building_ids)
-        if not bounds:
-            self._set_status("Feil: Kunne ikke lese bygningsgeometri!", ed.Colors.Red)
-            return
-
-        x_min, x_max, y_min, y_max, building_z_min = bounds
-
-        terrain_z_values = self._sample_terrain_heights(terrain_mesh, x_min, x_max, y_min, y_max)
-        if not terrain_z_values:
-            self._set_status(
-                "Feil: Ingen treff på terreng! Flytt bygget over terrenget og prøv igjen.",
-                ed.Colors.Red
-            )
-            return
-
-        flat_z = self._calculate_flat_z(terrain_z_values)
-
-        self._flatten_terrain(terrain_mesh, x_min, x_max, y_min, y_max, flat_z)
-        doc.Objects.Replace(terrain_id, terrain_mesh)
-
-        self._move_building_to_z(doc, building_ids, building_z_min, flat_z)
+            if obj is not None: doc.Objects.Transform(bid, xform, True)
 
         doc.Views.Redraw()
-        self._set_status(
-            "Ferdig! Bygg plassert på Z={0}m, terreng tilpasset.".format(round(flat_z, 2)),
-            ed.Colors.Green
-        )
+        self._set_status("Ferdig! Z = {:.1f}m".format(fz), ed.Colors.Green)
 
 
 if __name__ == "__main__":
     dialog = PlasserByggDialog()
-    dialog.ShowModal(Rhino.UI.RhinoEtoApp.MainWindow)
+    dialog.Show()

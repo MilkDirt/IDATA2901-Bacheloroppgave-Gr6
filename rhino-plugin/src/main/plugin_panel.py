@@ -47,6 +47,7 @@ class PluginPanel(ef.Form):
         self.Resizable = False
         self.Width = 340
         self.Height = 640
+        self.Owner = __import__("Rhino").UI.RhinoEtoApp.MainWindow
         self._build_ui()
 
     def _build_ui(self):
@@ -227,12 +228,12 @@ class PluginPanel(ef.Form):
             self._set_status(self.b_status, "Feil: " + str(ex), ed.Colors.Red)
 
     def on_plasser(self, sender, e):
-        """Open Plasser Bygg dialog."""
+        """Open Plasser Bygg panel (non-modal Form — Rhino stays interactive)."""
         self._set_status(self.p_status, "Åpner...", ed.Colors.Orange)
         try:
             dlg = PlasserByggDialog()
-            dlg.ShowModal(Rhino.UI.RhinoEtoApp.MainWindow)
-            self._set_status(self.p_status, "Ferdig.", ed.Colors.Green)
+            dlg.Show()   # non-blocking — user can still click in the Rhino viewport
+            self._set_status(self.p_status, "Aktiv.", ed.Colors.Green)
         except Exception as ex:
             self._set_status(self.p_status, "Feil: " + str(ex), ed.Colors.Red)
 
