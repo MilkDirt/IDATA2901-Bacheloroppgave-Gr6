@@ -1,14 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-terreng_generator.py
-====================
-Generates 3D terrain mesh in Rhino from Norwegian elevation data (Kartverket).
-
-INPUT:  GPS coordinates (latitude/longitude) — copy straight from Google Maps
-        or norgeskart.no. No UTM knowledge needed.
-OUTPUT: Rhino mesh with real elevation in meters, height-colored.
-
-Can be run standalone (shows dialog) or called via generate_terrain(lat, lon, size).
+Fetches elevation data from Kartverket WCS and builds a height-colored 3D mesh in Rhino.
+Accepts GPS coordinates (lat/lon) — no UTM knowledge needed.
+Can be used standalone or imported via generate_terrain(lat, lon, size).
 """
 
 import Rhino
@@ -46,14 +40,8 @@ COLOR_STOPS = [
 # ---------------------------------------------------------------------------
 
 def _latlon_to_utm(lat, lon):
-    """
-    Convert WGS84 lat/lon to UTM easting/northing + zone number.
-    Applies Norway zone rules:
-      Sør-Norge / Vestlandet / Møre og Romsdal -> zone 32
-      Nordland / Troms                          -> zone 33
-      Finnmark                                  -> zone 35
-    Returns (easting, northing, zone_number, epsg_code).
-    """
+    # Norway uses non-standard UTM zones so we handle those manually before
+    # running the standard transverse Mercator projection math.
     if lat >= 72.0:
         zone = 33  # Svalbard
     elif lat >= 56.0 and lat < 64.0 and lon >= 3.0 and lon < 12.0:
@@ -115,10 +103,8 @@ def _latlon_to_utm(lat, lon):
 # ---------------------------------------------------------------------------
 
 def _build_wcs_url(ost, nord, size, epsg):
-    """
-    Build Kartverket WCS GetCoverage URL requesting GeoTIFF (Float32).
-    Minimum bbox the server accepts is 1500m.
-    """
+    # Kartverket refuses requests smaller than 1500m, so we clamp fetch size here.
+    # The bbox is expressed in the projected CRS (UTM) centered on the input coordinates.
     fetch = max(float(size), 1500.0)
     crs   = "urn:ogc:def:crs:EPSG::{0}".format(epsg)
     half = fetch / 2.0
@@ -163,10 +149,9 @@ def _cache_path(ost, nord, size, epsg):
 
 
 def _download_geotiff(url, cache_file):
-    """
-    Download GeoTIFF from Kartverket WCS.
-    WCS 1.1 returns multipart MIME — extract TIFF bytes by searching for magic header.
-    """
+    # The WCS response is wrapped in a multipart MIME envelope.
+    # Instead of parsing MIME properly we just scan for the TIFF magic header bytes —
+    # either little-endian (II) or big-endian (MM) — and slice from there.
     try:
         import urllib.request as ul
     except ImportError:
@@ -197,18 +182,10 @@ def _download_geotiff(url, cache_file):
 # ---------------------------------------------------------------------------
 
 def _read_geotiff_floats(tiff_data):
-    """
-    Parse a Float32 single-band GeoTIFF from raw bytes using only struct.
-    GeoTIFF = standard TIFF + geo metadata tags. Pixel data is plain TIFF.
-
-    Supports:
-      - Little-endian and big-endian
-      - Stripped TIFF layout (what Kartverket sends)
-      - Float32 (SampleFormat=3, BitsPerSample=32)
-      - Int16 / UInt16 fallback for older DTM10 data
-
-    Returns (pixels_flat_list, width, height).
-    """
+    # Hand-rolled TIFF parser using only struct — avoids any external geo libraries.
+    # Reads the IFD (image file directory) to find image dimensions, pixel format,
+    # and strip/tile offsets, then unpacks pixel data into a flat float list.
+    # Returns (pixels_flat_list, width, height).
     if len(tiff_data) < 8:
         raise Exception("TIFF for kort")
 
@@ -347,7 +324,8 @@ def _read_geotiff_floats(tiff_data):
 # ---------------------------------------------------------------------------
 
 def _box_smooth(grid, cols, rows, radius, passes):
-    """Box-average on flat 2D grid. Runs on Z values before mesh is built."""
+    # Runs a box-average kernel over the flat Z grid to reduce noise from the DTM.
+    # Larger radius or more passes = smoother terrain, but blurs sharp ridges.
     for _ in range(passes):
         ng = list(grid)
         for r in range(rows):
@@ -367,12 +345,11 @@ def _box_smooth(grid, cols, rows, radius, passes):
 # ---------------------------------------------------------------------------
 
 def _build_mesh(pixels, img_w, img_h, fetch_size, requested_size):
-    """
-    Build Rhino mesh from flat pixel list.
-    Crops the image to exactly requested_size meters so a 500m request
-    gives a real 500x500m patch at full resolution (not squished 1500m).
-    Returns (mesh, min_elev_m, max_elev_m).
-    """
+    # Converts the flat pixel list into a Rhino mesh.
+    # Kartverket sends a minimum 1500m tile even for smaller requests, so we
+    # crop to the requested size from the center before sampling.
+    # TIFF row 0 = north so we flip the Y axis when placing vertices.
+    # Returns (mesh, min_elev_m, max_elev_m).
     step = MESH_STEP
 
     # Kartverket returns ~1px per meter so crop pixel count = requested meters
@@ -476,12 +453,10 @@ def _apply_colors(mesh, min_z, max_z):
 # ---------------------------------------------------------------------------
 
 def generate_terrain(lat, lon, size):
-    """
-    Download and generate terrain mesh from GPS coordinates.
-    lat, lon : WGS84 decimal degrees  (e.g. 62.4722, 6.1495 for Ålesund)
-    size     : area side length in meters  (e.g. 1000)
-    Returns  : (success: bool, message: str)
-    """
+    # Main entry point called from plugin_panel.py.
+    # Converts coordinates, downloads the DTM (or reads from cache), parses the TIFF,
+    # builds the mesh, colors it, centers it at the origin, and adds it to the doc.
+    # Returns (success: bool, message: str) so the panel can show status.
     try:
         ost, nord, zone, epsg = _latlon_to_utm(lat, lon)
         print("UTM sone {z} (EPSG:{e}): Ost={o:.0f}, Nord={n:.0f}".format(

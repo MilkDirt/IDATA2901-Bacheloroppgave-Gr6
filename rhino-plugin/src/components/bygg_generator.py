@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
 """
-Bygg Generator — Rhino plugin for AI-assisted building generation.
-Generates walls, windows and roof from a selected bounding box skeleton.
-Connects to a local FastAPI backend to get AI-decided architectural parameters.
+Generates walls, windows and a flat roof from a selected bounding box in Rhino.
+Calls a local FastAPI backend for AI-decided window ratio and wall thickness.
 """
 import Rhino
 import rhinoscriptsyntax as rs
@@ -25,7 +24,6 @@ class ByggGeneratorDialog(ef.Dialog):
         self._build_ui()
 
     def _build_ui(self):
-        """Build and arrange all UI elements in the dialog."""
         desc_label = ef.Label()
         desc_label.Text = "Beskriv bygget:"
         self.desc_input = ef.TextBox()
@@ -68,16 +66,12 @@ class ByggGeneratorDialog(ef.Dialog):
         self.Content = layout
 
     def _set_status(self, text, color):
-        """Update the status label with a message and color."""
         self.status_label.Text = text
         self.status_label.TextColor = color
 
     def _parse_floor_levels(self, floor_text, z_min, z_max, total_height):
-        """
-        Parse the floor input field into a list of Z levels.
-        Accepts either a floor count (e.g. '3') or explicit Z heights (e.g. '0;7;14').
-        Returns a sorted list of Z values representing floor boundaries.
-        """
+        # If the input contains semicolons it's treated as explicit Z heights (e.g. "0;7;14").
+        # Otherwise it's a floor count and we divide the total height evenly.
         if ";" in floor_text:
             try:
                 return sorted(set(float(h.strip()) for h in floor_text.split(";")))
@@ -92,10 +86,8 @@ class ByggGeneratorDialog(ef.Dialog):
                 return [z_min, z_max]
 
     def _fetch_ai_parameters(self, description, num_floors, total_height, box_width, box_depth):
-        """
-        Call the FastAPI backend to get AI-generated building parameters.
-        Returns (window_ratio, wall_thickness). Falls back to defaults if the call fails.
-        """
+        # Sends building description + dimensions to the local FastAPI server.
+        # If the server isn't running we just use sensible defaults so the UI doesn't break.
         try:
             import urllib.request as urllib_req
             url = "http://localhost:8000/generate-building"
@@ -115,11 +107,9 @@ class ByggGeneratorDialog(ef.Dialog):
             return 0.4, 0.2
 
     def _get_sorted_ground_corners(self, brep, z_min, z_level):
-        """
-        Extract the ground-level corners from the bounding box brep.
-        Sorts corners by angle around the centroid so walls are drawn in order.
-        Returns a closed list of Point3d at the given z_level, or None if no points found.
-        """
+        # Filter vertices to only those sitting at Z = z_min (ground level).
+        # Sort by angle around the centroid so adjacent corners are always next to each other —
+        # without this, wall segments can be drawn in the wrong order and cross each other.
         point_list = [v.Location for v in brep.Vertices]
         ground_pts = [p for p in point_list if abs(p.Z - z_min) < 0.1]
 
@@ -135,10 +125,6 @@ class ByggGeneratorDialog(ef.Dialog):
         return corner_pts
 
     def _generate_floor(self, doc, segments, z_bottom, z_top, panel_width, win_ratio):
-        """
-        Generate walls and windows for a single floor.
-        Each wall segment gets a wall surface and evenly spaced window panels.
-        """
         for seg in segments:
             pt_a = rg.Point3d(seg.From.X, seg.From.Y, z_bottom)
             pt_b = rg.Point3d(seg.To.X, seg.To.Y, z_bottom)
@@ -154,10 +140,8 @@ class ByggGeneratorDialog(ef.Dialog):
 
     def _generate_windows(self, doc, pt_a, pt_b, seg_len, floor_height,
                           panel_width, win_ratio, z_bottom):
-        """
-        Generate window openings along a single wall segment.
-        Windows are evenly distributed across panels based on the window ratio.
-        """
+        # Divides the wall length into equal panels, then places a window in the middle of each.
+        # win_ratio controls both the width and height of each window as a fraction of the panel.
         if seg_len <= 0:
             return
 
@@ -186,7 +170,6 @@ class ByggGeneratorDialog(ef.Dialog):
                 doc.Objects.AddSurface(win_srf)
 
     def _generate_roof(self, doc, corner_pts, z_top):
-        """Generate a flat planar roof surface at the top of the building."""
         top_pts = [rg.Point3d(p.X, p.Y, z_top) for p in corner_pts[:-1]]
         top_pts.append(top_pts[0])
         roof_curve = rg.PolylineCurve([rg.Point3d(p) for p in top_pts])
@@ -199,11 +182,11 @@ class ByggGeneratorDialog(ef.Dialog):
         self.Close()
 
     def on_generate(self, sender, e):
-        """Main handler — reads inputs, fetches AI params, and generates the building geometry."""
         self._set_status("Henter AI parametere...", ed.Colors.Orange)
         doc = Rhino.RhinoDoc.ActiveDoc
 
-        # Get already selected objects in Rhino — user selects before clicking button
+        # Check if the user already has something selected in Rhino before opening this dialog.
+        # If not, prompt them to select now.
         selected_ids = rs.SelectedObjects()
         if not selected_ids:
             # Nothing preselected — ask user to select
@@ -214,7 +197,7 @@ class ByggGeneratorDialog(ef.Dialog):
             self._set_status("Ingen objekter valgt!", ed.Colors.Red)
             return
 
-        # Compute combined bounding box from all selected objects
+        # Walk all selected objects and union their bounding boxes into one combined box
         combined_bbox = rg.BoundingBox.Empty
         for obj_id in selected_ids:
             obj = doc.Objects.Find(obj_id)
@@ -241,7 +224,7 @@ class ByggGeneratorDialog(ef.Dialog):
             self.desc_input.Text, num_floors, total_height, box_width, box_depth
         )
 
-        # Build 4 corners from the bounding box
+        # Build a closed rectangular footprint from the bounding box min/max corners
         mn = combined_bbox.Min
         mx = combined_bbox.Max
         corner_pts = [

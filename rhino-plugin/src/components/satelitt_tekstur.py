@@ -1,12 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-Satellitt Tekstur — applies ESRI World Imagery to a terrain mesh.
-Fetches image for the exact same UTM bbox the terrain was built from.
-UV coordinates map mesh XY directly to image pixel fractions.
-
-FIX: The terrain mesh is centered at origin by terreng_generator.py,
-     so UV must be computed relative to the mesh's own bounding box,
-     not assuming the mesh starts at (0, 0).
+Drapes ESRI World Imagery onto a terrain mesh as a UV-mapped material.
+Fetches the same UTM bbox used when building the terrain, so the image lines up.
+Note: mesh is centered at origin by terreng_generator, so UV is relative to mesh bounds.
 """
 import Rhino
 import Rhino.Geometry as rg
@@ -72,10 +68,9 @@ def _utm_to_latlon(ost, nord, epsg):
 
 
 def _fetch_esri(ost, nord, requested_size, epsg):
-    """
-    Fetch ESRI for the full Kartverket fetch area (max(size,1500)m).
-    Returns (image_bytes, fetch_size_m) so UV can be scaled correctly.
-    """
+    # We fetch the same area size as the terrain (min 1500m) so the image
+    # covers exactly the same ground as the mesh — UV mapping depends on this.
+    # Returns (jpeg_bytes, fetch_size_m) so the caller can set UV scale correctly.
     fetch_m = max(float(requested_size), 1500.0)
 
     lat_sw, lon_sw = _utm_to_latlon(ost - fetch_m/2,  nord - fetch_m/2, epsg)
@@ -150,20 +145,10 @@ class SatellittTeksturDialog(ef.Dialog):
         self.status.TextColor = color
 
     def _apply_uv(self, mesh, fetch_size):
-        """
-        Map mesh vertices to UV coordinates in the ESRI image.
-
-        The terrain mesh is CENTERED at the origin (terreng_generator translates
-        it by -bbox.Center before adding to Rhino). So the mesh spans roughly
-        [-fetch_size/2 .. +fetch_size/2] in both X and Y.
-
-        UV mapping:
-          U = (vertex.X + fetch_size/2) / fetch_size   →  0.0 (west) to 1.0 (east)
-          V = (vertex.Y + fetch_size/2) / fetch_size   →  0.0 (south) to 1.0 (north)
-
-        This correctly aligns the ESRI image (which also covers the same centered
-        fetch_size × fetch_size area) with the mesh geometry.
-        """
+        # terreng_generator centers the mesh at the origin, so vertex X/Y
+        # range from -fetch_size/2 to +fetch_size/2.
+        # Adding half before dividing normalizes that range to 0..1 UV space.
+        # U goes west→east, V goes south→north.
         half = fetch_size / 2.0
         tc = mesh.TextureCoordinates
         tc.Clear()
@@ -174,6 +159,9 @@ class SatellittTeksturDialog(ef.Dialog):
             tc.Add(u, vv)
 
     def _apply_material(self, doc, obj_id, mesh, tex_path):
+        # Creates a new Rhino material with the downloaded image as a bitmap texture,
+        # assigns it directly to the mesh object, and clears vertex colors so the
+        # texture isn't blended with the height coloring underneath.
         mat = Rhino.DocObjects.Material()
         mat.Name = "Flyfoto_ESRI"
         mat.SetBitmapTexture(tex_path)
