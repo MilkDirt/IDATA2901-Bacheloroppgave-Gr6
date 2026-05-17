@@ -6,6 +6,12 @@ Prosjektet består av to deler som jobber sammen:
 
 ---
 
+## Rapport
+
+- Første utkast til teoridelen finnes i [`rapport/teori-del.md`](rapport/teori-del.md)
+
+---
+
 ## Del 1 — RAG-system (spørsmål/svar på dokumenter)
 
 Et nettbasert system der brukere kan logge inn og stille spørsmål til PDF-dokumenter — for eksempel lover, forskrifter eller byggesøknader. Systemet finner relevante avsnitt i dokumentene og genererer et svar ved hjelp av en språkmodell fra NTNUs IDUN-infrastruktur.
