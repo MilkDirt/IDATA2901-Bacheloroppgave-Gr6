@@ -2,6 +2,8 @@
 
 Dette prosjektet er en bacheloroppgave utviklet i samarbeid med Multiconsult. Målet er å bruke kunstig intelligens til å effektivisere arbeid med byggesøknader og bygningsvisualisering.
 
+Se også [PROSJEKTHANDBOK.md](./PROSJEKTHANDBOK.md) for samlet prosjektoversikt, oppsett og vedlikeholdsrutiner.
+
 Prosjektet består av to deler som jobber sammen:
 
 ---
@@ -16,8 +18,9 @@ Brukere kan organisere samtalene sine i prosjekter, og all historikk lagres auto
 
 ### Oppsett
 ```
+cd Backend
 pip install -r requirements.txt
-# Legg til NTNU_API_KEY og NTNU_BASE_URL i .env (se .env_example)
+# Legg til NTNU_API_KEY og NTNU_BASE_URL i .env (se .env.example)
 # Legg PDF-filer i data/
 python -m src.ingest.build_index
 uvicorn src.api.main:app --reload
@@ -27,7 +30,7 @@ py -m uvicorn src.api.main:app --reload
 6. Open http://127.0.0.1:8000/docs to ask questions via the API
 ```
 ```
-cd frontend && npm install && npm run dev
+cd Frontend && npm install && npm run dev
 ```
 
 ---
@@ -41,7 +44,7 @@ Terrenget hentes som høydedata fra Kartverket og dekkes med satellittfoto fra E
 **Teknologi:** Rhino 8 · RhinoCommon · Kartverket WMS · ESRI World Imagery · FastAPI
 
 ### Oppsett
-Åpne Rhino 8 og kjør `rhino/plugin_panel.py` via **Tools → PythonScript → Run**.
+Åpne Rhino 8 og kjør `rhino-plugin/src/main/plugin_panel.py` via **Tools → PythonScript → Run**.
 Backend-serveren må kjøre for at AI-parametrene skal fungere.
 
 ---
