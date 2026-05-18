@@ -1,3 +1,12 @@
+/**
+ * ChatPanel.jsx
+ *
+ * Displays the main chat interface and message history.
+ * Handles message input, sending messages and automatic scrolling.
+ * Supports markdown rendering, source display and quick suggestion prompts.
+ * Styles are located in src/Styles/chat.css
+ */
+
 import React, { useRef, useEffect } from "react";
 import sendIcon from "../assets/button.png";
 import soknadIcon from "../assets/soknad-icon1.png";

@@ -1,3 +1,12 @@
+/**
+ * QueryPanel.jsx
+ *
+ * Displays forms for needs assessment and cost estimation.
+ * Allows the user to enter information and generate documents.
+ * Handles form switching, input fields and form reset functionality.
+ * Styles are located in src/Styles/QueryPanel.css
+ */
+
 import React, { useState } from "react";
 import "../Styles/QueryPanel.css";
 
