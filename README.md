@@ -16,9 +16,9 @@ Brukere kan organisere samtalene sine i prosjekter, og all historikk lagres auto
 
 ### Oppsett med NTNU API
 ```
-1. installer requirements: pip install -r requirements.txt
-2. Legg til NTNU_API_KEY og NTNU_BASE_URL i .env (se .env_example)
-3. Legg PDF-filer i data/
+1. installer requirements: pip install -r requirements.txt (/Backend/requirements.txt)
+2. Lag en fil i /Backend mappen navngi den ".env" (kopier fra .env.example)
+3. Du kan legge relevante PDF-filer i /Backend/data/
 4. python -m src.ingest.build_index
 5. Kjøre backend: Først bytt til backend mappe med "cd /Backend"
 så kjør backenden med:
@@ -35,32 +35,15 @@ py -m uvicorn src.api.main:app --reload
 ---
 ### Oppsett med annen API
 ```
-1. installer requirements: pip install -r requirements.txt
-2. Lag en .env fil i /Backend mappen (kopier fra .env.example) Variabel navnene trenger ikke å endres selvom du ikke bruker NTNU API.
-3. Bytt ut NTNU_API_KEY og NTNU_BASE_URL med din egen leverandør. Eksempler:
-OpenAI:
-NTNU_API_KEY=sk-...
-NTNU_BASE_URL=https://api.openai.com/v1
-CHAT_MODEL=gpt-4o-mini
-EMBED_MODEL=text-embedding-3-small
-OpenRouter:
-NTNU_API_KEY=sk-or-v1-...
-NTNU_BASE_URL=https://openrouter.ai/api/v1
-CHAT_MODEL=anthropic/claude-3.5-sonnet
-EMBED_MODEL=openai/text-embedding-3-small
-Lokal Ollama (gratis, kjører på egen maskin):
-NTNU_API_KEY=ollama
-NTNU_BASE_URL=http://localhost:11434/v1
-CHAT_MODEL=llama3.2
-EMBED_MODEL=nomic-embed-text
-4. Legg PDF-filer i data/
-5.python -m src.ingest.build_index
+1. installer requirements: pip install -r requirements.txt (/Backend/requirements.txt)
+2. Lag en fil i /Backend mappen navngi den "/.env" (kopier fra /Backend/.env.example) Variabel navnene trenger ikke å endres selvom du ikke bruker NTNU API.
+3. Bytt ut NTNU_API_KEY og NTNU_BASE_URL med din egen leverandør.
+4. Du kan legge relevante PDF-filer i /Backend/data/
+5. python -m src.ingest.build_index
 (NB: Hvis du bytter EMBED_MODEL senere må du kjøre denne på nytt)
 6. Kjøre backend: Først bytt til backend mappe med "cd /Backend"
 så kjør backenden med:
-uvicorn src.api.main:app --reload
-eller
-py -m uvicorn src.api.main:app --reload
+"uvicorn src.api.main:app --reload" eller "py -m uvicorn src.api.main:app --reload"
 7. Kjøre frontend: Last ned og kjør frontend med "cd /Frontend && npm install && npm run dev"
 8. Open http://127.0.0.1:8000/docs to ask questions via the API
 ```
