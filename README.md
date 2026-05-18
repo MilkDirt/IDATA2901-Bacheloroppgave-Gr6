@@ -19,14 +19,14 @@ Brukere kan organisere samtalene sine i prosjekter, og all historikk lagres auto
 1. installer requirements: pip install -r requirements.txt (/Backend/requirements.txt)
 2. Lag en fil i /Backend mappen navngi den ".env" (kopier fra .env.example)
 3. Du kan legge relevante PDF-filer i /Backend/data/
-4. python -m src.ingest.build_index
+4. Indekser PDF-filene og lag en søkbar database for RAG: "python -m src.ingest.build_index" (Kjør denne på nytt hvis du legger til nye PDF-er eller bytter EMBED_MODEL)
 5. Kjøre backend: Først bytt til backend mappe med "cd /Backend"
 så kjør backenden med:
 uvicorn src.api.main:app --reload
 eller
 py -m uvicorn src.api.main:app --reload
 6. Kjøre frontend: Last ned og kjør frontend med "cd /Frontend && npm install && npm run dev"
-7. Open http://127.0.0.1:8000/docs to ask questions via the API
+7. Åpne http://127.0.0.1:8000/docs for å få tilgang til agenten.
 ```
 ```
 
@@ -39,13 +39,13 @@ py -m uvicorn src.api.main:app --reload
 2. Lag en fil i /Backend mappen navngi den "/.env" (kopier fra /Backend/.env.example) Variabel navnene trenger ikke å endres selvom du ikke bruker NTNU API.
 3. Bytt ut NTNU_API_KEY og NTNU_BASE_URL med din egen leverandør.
 4. Du kan legge relevante PDF-filer i /Backend/data/
-5. python -m src.ingest.build_index
+5. Indekser PDF-filene og lag en søkbar database for RAG: "python -m src.ingest.build_index" (Kjør denne på nytt hvis du legger til nye PDF-er eller bytter EMBED_MODEL)
 (NB: Hvis du bytter EMBED_MODEL senere må du kjøre denne på nytt)
 6. Kjøre backend: Først bytt til backend mappe med "cd /Backend"
 så kjør backenden med:
 "uvicorn src.api.main:app --reload" eller "py -m uvicorn src.api.main:app --reload"
 7. Kjøre frontend: Last ned og kjør frontend med "cd /Frontend && npm install && npm run dev"
-8. Open http://127.0.0.1:8000/docs to ask questions via the API
+8. Åpne http://127.0.0.1:8000/docs for å få tilgang til agenten.
 ```
 ```
 
