@@ -1,10 +1,10 @@
 /**
  * LoginPage.jsx
  *
- * Viser innlogging og registreringsskjema.
- * Bytter mellom innlogging og registrering via faner.
- * Inkluderer frontend-validering av e-post og passord.
- * Stiler ligger i src/Styles/auth.css
+ * Displays login and registration forms.
+ * Switches between login and registration using tabs.
+ * Includes frontend validation for email and password fields.
+ * Styles are located in src/Styles/auth.css
  */
 
 import React, { useState } from "react";
